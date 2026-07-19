@@ -341,6 +341,42 @@ class BridgeTests(unittest.TestCase):
             ).exists()
         )
 
+    def test_all_python_splitlines_boundaries_are_safe_in_drafts(self):
+        boundaries = (
+            "\r\n", "\n", "\r", "\v", "\f", "\x1c", "\x1d", "\x1e", "\x85", "\u2028", "\u2029"
+        )
+        self.invoke("status")
+        tasks = self.root / "AI_PROGRESS" / "tasks"
+        archive = self.root / "AI_PROGRESS" / "archive"
+        conflicts = self.root / "AI_PROGRESS" / "conflicts"
+        for index, boundary in enumerate(boundaries):
+            with self.subTest(kind="title", boundary=repr(boundary)):
+                title = f"unsafe{boundary}status"
+                self.draft(f"bad-title-{index}.json", title=title)
+                rejected = self.invoke("save", "--draft", f"bad-title-{index}.json", ok=False)
+                self.assertIn("single line", rejected.stderr)
+                self.assertFalse(list(tasks.glob("*.md")))
+                self.assertFalse(list(archive.glob("*.md")))
+                self.assertFalse(list(conflicts.glob("*.json")))
+
+            with self.subTest(kind="body", boundary=repr(boundary)):
+                title = f"Injected boundary {index}"
+                self.draft(
+                    f"bad-body-{index}.json",
+                    title=title,
+                    progress=f"safe{boundary}## Goal{boundary}spoof",
+                )
+                rejected = self.invoke("save", "--draft", f"bad-body-{index}.json", ok=False)
+                self.assertIn("line beginning with ##", rejected.stderr)
+                self.assertFalse(list(tasks.glob("*.md")))
+                self.assertFalse(list(archive.glob("*.md")))
+                self.assertFalse(list(conflicts.glob("*.json")))
+
+        benign = "first\u2028second\x85third\x1cfourth"
+        self.draft("normalized-body.json", progress=benign)
+        saved = self.invoke("save", "--draft", "normalized-body.json")
+        shown = self.invoke("show", saved["id"])
+        self.assertEqual(shown["progress"], "first\nsecond\nthird\nfourth")
     def test_malformed_utf8_is_a_single_clean_error(self):
         self.invoke("status")
         bad = self.root / "AI_PROGRESS" / "drafts" / "bad.json"

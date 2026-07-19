@@ -36,6 +36,7 @@ BODY_FIELDS = (
     "related_files",
     "rerun",
 )
+LINE_BOUNDARY_RE = re.compile(r"\r\n|[\n\r\v\f\x1c-\x1e\x85\u2028\u2029]")
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -49,6 +50,10 @@ class BridgeError(Exception):
 
 def one_line(value: object) -> str:
     return " ".join(str(value).splitlines()).strip() or "unknown error"
+
+def normalize_line_boundaries(value: str) -> str:
+    """Map every Python splitlines boundary accepted by our format to LF."""
+    return LINE_BOUNDARY_RE.sub("\n", value)
 
 
 def now() -> str:
@@ -418,15 +423,14 @@ def read_draft(root: Path, filename: str) -> tuple[dict[str, Any], Path]:
     if (
         not isinstance(title, str)
         or not title.strip()
-        or "\n" in title
-        or "\r" in title
+        or LINE_BOUNDARY_RE.search(title)
     ):
         fail("draft title must be a non-empty single line")
     for key in BODY_FIELDS:
         field = value.get(key)
         if not isinstance(field, str):
             fail(f"draft field {key} must be a string")
-        normalized = field.replace("\r\n", "\n").replace("\r", "\n")
+        normalized = normalize_line_boundaries(field)
         value[key] = normalized
         if re.search(r"(?m)^## ", normalized):
             fail(f"draft field {key} may not contain a line beginning with ## ")

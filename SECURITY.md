@@ -16,7 +16,7 @@ The v1.0.0 bootstrap is pinned to:
 
 Required SHA-256:
 
-`F54D20B41681D9E1F044F78C3A0A2971537482F4216D5B2A2BAE01729EF8AC90`
+`9D5BD5DBDCD2436CD669C419B9731839B1B4E5E080E8C7BCA366915FC63CBA01`
 
 The AI must download this file to the operating-system temporary directory, verify the hash before execution, and stop if it differs. It must not silently use another branch, tag, mirror, or URL. The installer requires Python 3.10 or newer, uses only the standard library, and contains the release payload; it does not fetch dependencies at runtime.
 
