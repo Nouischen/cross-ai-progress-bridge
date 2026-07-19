@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#15231f">
-  <meta name="description" content="跨 AI 進度接力：讓 Claude Code、Codex 與不同新對話共用本機 Markdown 進度。換視窗、換模型，進度不用重講。">
+  <meta name="description" content="跨 AI 進度接力：Claude Code、Codex 與同模型新對話共用本機 Markdown 進度。貼一段短提示詞，AI 直接安裝。">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <meta property="og:title" content="Cross-AI Progress Bridge｜跨 AI 進度接力">
-  <meta property="og:description" content="換視窗、換模型，進度不用重講。純本機 Markdown，免下載、免 Obsidian。">
+  <meta property="og:description" content="換視窗、換模型，進度不用重講。AI 直接安裝、純本機 Markdown，不必手動下載專案。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://cross-ai-progress-bridge.pages.dev">
   <title>Cross-AI Progress Bridge｜跨 AI 進度接力</title>
@@ -22,7 +22,7 @@
       --mint: #bfe4d4;
       --mint-dark: #12614a;
       --coral: #f3694f;
-      --coral-dark: #b93a2a;
+      --coral-dark: #a93427;
       --yellow: #f6cd5d;
       --blue: #dce7ff;
       --shadow: 0 20px 60px rgba(34, 51, 45, .10);
@@ -44,11 +44,11 @@
 
     a { color: inherit; }
     button, a { -webkit-tap-highlight-color: transparent; }
-    code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+    code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
     .wrap { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
     .skip {
       position: absolute; left: 16px; top: -80px; z-index: 100;
-      background: var(--ink); color: white; padding: 10px 14px; border-radius: 8px;
+      padding: 10px 14px; border-radius: 8px; color: white; background: var(--ink);
     }
     .skip:focus { top: 16px; }
 
@@ -68,7 +68,7 @@
     .navlinks { margin-left: auto; display: flex; align-items: center; gap: 19px; font-size: 14px; font-weight: 800; }
     .navlinks a { text-decoration: none; }
     .langswitch { display: inline-flex; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: #fff; }
-    .langswitch button { min-width: 42px; min-height: 36px; border: 0; background: transparent; color: var(--muted); padding: 5px 10px; border-radius: 999px; cursor: pointer; font-weight: 800; }
+    .langswitch button { min-width: 42px; min-height: 36px; border: 0; border-radius: 999px; padding: 5px 10px; color: var(--muted); background: transparent; cursor: pointer; font-weight: 800; }
     .langswitch button.active { color: white; background: var(--ink); }
 
     .pill, .ghost {
@@ -83,10 +83,10 @@
 
     .hero { padding: 86px 0 62px; overflow: hidden; }
     .hero-grid { display: grid; grid-template-columns: 1.04fr .96fr; align-items: center; gap: 62px; }
-    .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 6px 11px; border-radius: 999px; background: var(--mint); color: #184d3e; font-size: 14px; font-weight: 900; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 6px 11px; border-radius: 999px; color: #184d3e; background: var(--mint); font-size: 14px; font-weight: 900; }
     h1 { margin: 20px 0 18px; max-width: 720px; font-size: clamp(44px, 6.5vw, 76px); line-height: 1.05; letter-spacing: -.055em; }
     .underline { position: relative; white-space: nowrap; }
-    .underline::after { content: ""; position: absolute; height: 11px; left: 1%; right: -1%; bottom: 2px; z-index: -1; background: var(--yellow); border-radius: 80% 20% 70% 30%; transform: rotate(-1deg); }
+    .underline::after { content: ""; position: absolute; height: 11px; left: 1%; right: -1%; bottom: 2px; z-index: -1; border-radius: 80% 20% 70% 30%; background: var(--yellow); transform: rotate(-1deg); }
     .lead { margin: 0 0 25px; max-width: 690px; color: #41534c; font-size: clamp(18px, 2.2vw, 23px); }
     .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
     .micro { margin-top: 16px; color: var(--muted); font-size: 14px; }
@@ -98,7 +98,7 @@
     .demo::before { content: "LOCAL MARKDOWN"; position: absolute; right: -18px; top: -18px; padding: 7px 12px; border: 2px solid var(--ink); border-radius: 999px; background: var(--yellow); font-size: 11px; font-weight: 1000; letter-spacing: .08em; transform: rotate(4deg); }
     .browserbar { display: flex; align-items: center; gap: 7px; padding-bottom: 15px; border-bottom: 1px solid #ece8df; }
     .dot { width: 10px; height: 10px; border-radius: 50%; }
-    .browserbar span:last-child { margin-left: 6px; color: var(--muted); font: 12px/1.2 monospace; }
+    .browserbar span:last-child { margin-left: 6px; color: var(--muted); font: 12px/1.2 monospace; overflow-wrap: anywhere; }
     .handoff { padding: 22px 5px 4px; }
     .agent { display: flex; align-items: center; gap: 12px; }
     .avatar { width: 46px; height: 46px; display: grid; place-items: center; border: 2px solid var(--ink); border-radius: 15px; font-size: 21px; }
@@ -106,7 +106,7 @@
     .agent small { color: var(--muted); }
     .file-card { margin: 17px 0; padding: 16px; border: 1.5px solid var(--ink); border-radius: 17px; background: #f7fbf8; }
     .file-title { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 12px; font: 800 13px/1.2 monospace; }
-    .ready { padding: 4px 8px; color: #0e5b43; background: var(--mint); border-radius: 999px; font: 900 10px/1.2 system-ui; }
+    .active-label { padding: 4px 8px; border-radius: 999px; color: #0e5b43; background: var(--mint); font: 900 10px/1.2 system-ui; }
     .taskline { display: flex; gap: 9px; margin: 8px 0; color: #3d4c47; font-size: 13px; }
     .check { width: 17px; height: 17px; flex: 0 0 auto; display: grid; place-items: center; border: 1.5px solid var(--ink); border-radius: 5px; font-size: 10px; }
     .check.done { background: var(--mint); }
@@ -117,7 +117,7 @@
     .tint { border-block: 1px solid rgba(21, 35, 31, .07); background: rgba(255, 255, 255, .50); }
     .section-tag { color: var(--coral-dark); font-size: 13px; font-weight: 1000; letter-spacing: .10em; text-transform: uppercase; }
     h2 { margin: 8px 0 15px; font-size: clamp(31px, 4vw, 48px); line-height: 1.15; letter-spacing: -.035em; }
-    .sub { max-width: 760px; margin: 0 0 32px; color: var(--muted); font-size: 18px; }
+    .sub { max-width: 790px; margin: 0 0 32px; color: var(--muted); font-size: 18px; }
     .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
     .card { padding: 23px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); box-shadow: 0 8px 30px rgba(34, 51, 45, .045); }
     .card .icon { width: 43px; height: 43px; display: grid; place-items: center; margin-bottom: 15px; border-radius: 14px; background: var(--blue); font-size: 21px; }
@@ -137,28 +137,32 @@
     .os { padding: 15px 17px; border: 1px dashed #b9b4a9; border-radius: 14px; background: #fbfaf5; }
     .os b { color: var(--ink); }
     .os ol { margin: 8px 0 0; padding-left: 22px; color: #435149; }
+    .prereq { margin-top: 15px; padding: 14px 16px; border: 1px solid #b9d5c9; border-radius: 14px; background: #eef8f3; color: #355b4e; }
 
-    .promptbox { position: relative; margin-top: 15px; padding: 19px 106px 19px 19px; border: 2px solid var(--ink); border-radius: 16px; background: #13241f; color: #f5fbf8; box-shadow: 5px 5px 0 var(--mint-dark); overflow-wrap: anywhere; font: 13px/1.7 "SFMono-Regular", Consolas, monospace; }
+    .promptbox { position: relative; margin-top: 15px; padding: 19px 106px 19px 19px; border: 2px solid var(--ink); border-radius: 16px; color: #f5fbf8; background: #13241f; box-shadow: 5px 5px 0 var(--mint-dark); overflow-wrap: anywhere; white-space: pre-wrap; font: 13px/1.72 "SFMono-Regular", Consolas, monospace; }
     .copybtn { position: absolute; right: 12px; top: 12px; min-width: 79px; padding: 8px 11px; border: 0; border-radius: 10px; color: var(--ink); background: var(--yellow); cursor: pointer; font-weight: 1000; }
     .copybtn:focus-visible, .pill:focus-visible, .ghost:focus-visible, .langswitch button:focus-visible { outline: 3px solid #4f7cff; outline-offset: 3px; }
     .copy-status { min-height: 22px; margin-top: 7px; color: var(--mint-dark); font-size: 13px; font-weight: 900; }
+    .fineprint { font-size: 14px; }
 
     .verify { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; counter-reset: vstep; }
     .vitem { padding: 17px; border: 1px solid var(--line); border-radius: 15px; background: #fbfaf5; }
     .vitem::before { counter-increment: vstep; content: counter(vstep); display: inline-grid; place-items: center; width: 27px; height: 27px; margin-right: 6px; margin-bottom: 9px; border-radius: 50%; color: white; background: var(--coral); font-weight: 1000; }
-    .vitem code { display: block; margin-top: 7px; color: var(--ink); font-weight: 800; }
+    .vitem code { display: block; margin-top: 7px; color: var(--ink); font-weight: 800; white-space: normal; }
 
     .command-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .command { display: flex; gap: 13px; align-items: flex-start; padding: 17px; border: 1px solid var(--line); border-radius: 15px; background: var(--card); }
     .command code { flex: 0 0 auto; padding: 5px 8px; border-radius: 7px; color: #8d281e; background: #ffe3dc; font-weight: 800; }
     .command span { color: var(--muted); }
+    .mode-banner { margin: 0 0 20px; padding: 15px 17px; border: 1px solid #b9d5c9; border-radius: 15px; background: #eef8f3; }
 
     .compat { display: grid; grid-template-columns: .92fr 1.08fr; gap: 26px; align-items: start; }
     .socket { padding: 25px; border: 2px solid var(--ink); border-radius: 25px; background: var(--mint); box-shadow: 7px 7px 0 var(--ink); }
     .socket h3 { margin-top: 0; font-size: 25px; }
     .socket p { margin-bottom: 0; }
     .checks { display: grid; gap: 13px; }
-    .checks div { display: grid; grid-template-columns: 34px 1fr; gap: 11px; padding: 15px; border: 1px solid var(--line); border-radius: 15px; background: var(--card); }
+    .checks > div { display: grid; grid-template-columns: 34px 1fr; gap: 11px; padding: 15px; border: 1px solid var(--line); border-radius: 15px; background: var(--card); }
+    .checks p { margin: 0; }
     .checks b { display: block; }
     .checks span { color: var(--muted); }
 
@@ -170,11 +174,11 @@
     details { border-top: 1px solid var(--line); }
     details:last-child { border-bottom: 1px solid var(--line); }
     summary { padding: 18px 2px; cursor: pointer; font-weight: 900; }
-    details p { margin: -5px 0 20px; max-width: 860px; color: var(--muted); }
+    details p { margin: -5px 0 20px; max-width: 880px; color: var(--muted); }
 
     .final-cta { padding: 44px; border: 2px solid var(--ink); border-radius: 30px; color: white; background: var(--ink); box-shadow: 10px 10px 0 var(--yellow); }
     .final-cta h2 { margin-top: 0; }
-    .final-cta p { max-width: 720px; color: #d6e2dd; }
+    .final-cta p { max-width: 740px; color: #d6e2dd; }
     .final-cta .pill { color: var(--ink); background: var(--yellow); box-shadow: 4px 4px 0 #fff; }
     .final-cta .ghost { color: white; border-color: #75847f; background: transparent; }
 
@@ -209,6 +213,8 @@
       .os-grid, .verify, .command-grid, .trust-grid { grid-template-columns: 1fr; }
       .promptbox { padding: 58px 14px 15px; font-size: 12px; }
       .copybtn { left: 12px; right: auto; }
+      .command { display: grid; }
+      .command code { width: fit-content; }
       .final-cta { padding: 28px 21px; }
       .final-cta .hero-actions > * { width: 100%; }
       .footrow { align-items: flex-start; flex-direction: column; }
@@ -226,8 +232,8 @@
     <div class="wrap navrow">
       <a class="brand" href="#top"><span class="mark" aria-hidden="true">↔</span><span>Progress Bridge</span></a>
       <div class="navlinks">
-        <a href="#install" data-t="nav_install">開始使用</a>
-        <a href="#compat" data-t="nav_compat">既有系統</a>
+        <a href="#install" data-t="nav_install" data-nav-target="install">開始使用</a>
+        <a href="#compat" data-t="nav_compat" data-nav-target="compat">既有系統</a>
         <a class="github-link" href="https://github.com/Nouischen/cross-ai-progress-bridge" target="_blank" rel="noopener">GitHub ↗</a>
         <span class="langswitch" aria-label="Language">
           <button type="button" class="active" data-lang-button="zh-Hant">繁中</button>
@@ -244,24 +250,24 @@
           <div>
             <span class="eyebrow">Claude Code × Codex × 新對話</span>
             <h1>換視窗、換模型，<br><span class="underline">進度不用重講。</span></h1>
-            <p class="lead">把工作進度留在你自己的 Markdown 檔。開新的 Claude Code、Codex，甚至同一個模型的新對話，都能接著做。</p>
+            <p class="lead">把真正需要接手的工作狀態留在專案裡。開同一個模型的新對話，或從 Claude Code 換到 Codex，都能接著做。</p>
             <div class="hero-actions">
-              <a class="pill" href="#install">三步驟開始 <span aria-hidden="true">↓</span></a>
+              <a class="pill" href="#install">跟著做一次 <span aria-hidden="true">↓</span></a>
               <a class="ghost" href="https://github.com/Nouischen/cross-ai-progress-bridge" target="_blank" rel="noopener">查看開源專案 ↗</a>
             </div>
-            <div class="micro">免手動下載 · 不需要 Obsidian · 無帳號、無遙測 · 本機 Markdown</div>
+            <div class="micro">不必手動下載專案 · 需要 Python 3.10 以上 · 不需要 Obsidian · 無帳號、無遙測</div>
           </div>
           <div class="demo" aria-label="跨 AI 接力示意圖">
-            <div class="browserbar"><i class="dot" style="background:#f36b5b"></i><i class="dot" style="background:#f6c453"></i><i class="dot" style="background:#63c88a"></i><span>progress/summer-reading.md</span></div>
+            <div class="browserbar"><i class="dot" style="background:#f36b5b"></i><i class="dot" style="background:#f6c453"></i><i class="dot" style="background:#63c88a"></i><span>AI_PROGRESS/tasks/summer-reading.md</span></div>
             <div class="handoff">
               <div class="agent"><div class="avatar" style="background:#ffe7df">C</div><div><strong>Claude Code</strong><small>「記錄進度」</small></div></div>
               <div class="file-card">
-                <div class="file-title"><span>暑假閱讀清單</span><span class="ready">ACTIVE</span></div>
+                <div class="file-title"><span>暑假閱讀清單</span><span class="active-label">ACTIVE</span></div>
                 <div class="taskline"><span class="check done">✓</span><span>已決定第一本書</span></div>
                 <div class="taskline"><span class="check"></span><span>列出前三章的閱讀重點</span></div>
                 <div class="taskline"><span class="check"></span><span>下一步：整理第一章</span></div>
               </div>
-              <div class="arrowline">同一份檔案</div>
+              <div class="arrowline">同一份實體資料夾</div>
               <div class="agent" style="margin-top:17px"><div class="avatar" style="background:#e6efff">G</div><div><strong>Codex</strong><small>「我有哪些進度還沒做完的？」</small></div></div>
             </div>
           </div>
@@ -271,56 +277,59 @@
       <section class="tint" id="why">
         <div class="wrap">
           <span class="section-tag">Why it matters</span>
-          <h2>對話越長，不代表 AI 越懂你</h2>
-          <p class="sub">真正需要帶走的通常不是全部聊天，而是「做到哪裡、為什麼這樣決定、接下來做什麼」。把這些整理成可讀的進度檔，新視窗就不必重讀整段歷史。</p>
+          <h2>帶走工作狀態，不必搬走整段聊天</h2>
+          <p class="sub">真正需要接手的通常是：目標、做到哪裡、重要決定、卡點與下一步。這些由固定程式寫成可讀的 Markdown，新對話不必重新吞完整段 context。</p>
           <div class="cards">
-            <article class="card"><div class="icon">🪟</div><h3>同模型，換新對話</h3><p>Claude 換 Claude、Codex 換 Codex。離開過長的 context，保留真正有用的工作狀態。</p></article>
-            <article class="card"><div class="icon">⇄</div><h3>跨模型，按長處交班</h3><p>一邊研究與整理，另一邊實作或審查；也能輪流使用兩邊訂閱額度。哪個模型適合哪一步，由你決定。</p></article>
-            <article class="card"><div class="icon">☑</div><h3>直接問未完成事項</h3><p>說「我有哪些進度還沒做完的？」就列出進行中、卡住與下一步，不必記檔名或 task ID。</p></article>
+            <article class="card"><div class="icon">🪟</div><h3>同模型，換新對話</h3><p>Claude 換 Claude、Codex 換 Codex。離開太長的對話，保留真正有用的進度。</p></article>
+            <article class="card"><div class="icon">⇄</div><h3>跨模型，自由交班</h3><p>研究、寫作、實作或審查，可依實際表現與額度選模型。系統保存進度，不替你誇大誰一定擅長什麼。</p></article>
+            <article class="card"><div class="icon">☑</div><h3>直接問未完成事項</h3><p>說「我有哪些進度還沒做完的？」就能看到進行中、卡住與下一步，不必背檔名或編號。</p></article>
           </div>
         </div>
       </section>
 
       <section id="install">
         <div class="wrap">
-          <span class="section-tag">No-download setup</span>
-          <h2>三步驟安裝，全程跟 AI 說</h2>
-          <p class="sub">你不用到 GitHub 下載 ZIP，也不用解壓或搬檔。只要先開一個安全資料夾，再把固定版本的安裝指令貼給 Claude Code 或 Codex。</p>
-          <div class="setup-note"><span aria-hidden="true">⚠️</span><div><strong>第一次請用新資料夾測試。</strong>不要直接用含病歷、未去識別化個資、密碼、金鑰，或其他敏感內容的資料夾。</div></div>
+          <span class="section-tag">Guided setup</span>
+          <h2>第一次照著做，之後只要說人話</h2>
+          <p class="sub">你不用到 GitHub 下載 ZIP，也不用自己搬檔。先建立安全的空資料夾，再把下面的短提示詞貼給 Claude Code 或 Codex；AI 會下載固定版本的安裝器、核對雜湊並執行。</p>
+          <div class="setup-note"><span aria-hidden="true">⚠️</span><div><strong>第一次只用空白測試資料夾。</strong>不要拿含病歷、未去識別化個資、密碼、API key、憑證或其他敏感資料的資料夾測試。</div></div>
           <div class="steps">
             <article class="step">
               <div class="num">1</div>
               <div>
-                <h3>建立一個空白測試資料夾</h3>
-                <p>不要直接在桌面根目錄或家目錄貼上。照你的電腦做：</p>
+                <h3>在「文件」裡建立空白資料夾</h3>
+                <p>不要直接把 Claude Code 或 Codex 開在「桌面」最外層、使用者家目錄，或整顆硬碟。照你的電腦一步一步做：</p>
                 <div class="os-grid">
-                  <div class="os"><b>Windows</b><ol><li>打開「檔案總管」</li><li>左邊點「文件」</li><li>右鍵新增資料夾</li><li>命名「AI進度接力測試」</li></ol></div>
-                  <div class="os"><b>macOS</b><ol><li>打開 Finder</li><li>左邊點 Documents</li><li>新增檔案夾</li><li>命名「AI進度接力測試」</li></ol></div>
+                  <div class="os"><b>Windows</b><ol><li>打開「檔案總管」。</li><li>左邊點「文件」。</li><li>在空白處按右鍵 →「新增」→「資料夾」。</li><li>命名為「AI進度接力測試」。</li><li>打開 Claude Code 或 Codex，選擇這個資料夾當專案。</li></ol></div>
+                  <div class="os"><b>macOS</b><ol><li>打開 Finder。</li><li>左邊點「文件」或 Documents。</li><li>選「檔案」→「新增檔案夾」。</li><li>命名為「AI進度接力測試」。</li><li>打開 Claude Code 或 Codex，選擇這個資料夾當專案。</li></ol></div>
                 </div>
-                <p>接著在 Claude Code 選 <b>Local / Select folder</b>，或在 Codex 新增 <b>local project</b>，選剛才的資料夾。</p>
+                <div class="prereq"><b>需要 Python 3.10 以上。</b>不知道版本也沒關係：下一步的提示詞會請 AI 先檢查。若版本太舊或沒有安裝，AI 應先停下、不修改專案，再用白話帶你安裝新版 Python。</div>
               </div>
             </article>
+
             <article class="step">
               <div class="num">2</div>
               <div>
-                <h3>把這一句貼給其中一個 AI</h3>
-                <p>Claude Code 或 Codex 選一邊貼一次即可。AI 會抓固定版本、核對雜湊，再直接安裝；完整提示詞不用貼到第二邊。</p>
-                <div class="promptbox" id="install-prompt-zh">請把 https://raw.githubusercontent.com/Nouischen/cross-ai-progress-bridge/v1.0.0/INSTALL.md 下載到系統暫存資料夾，確認 SHA-256 為 62B052F6791BDA02C6749B3FD8FEDF320C3A4EE969EC8D32C432E438032C4FA2，完整讀取後，在目前專案逐條執行。不要只說明步驟，請直接安裝；無法完整讀取或雜湊不符就停止，不要猜測或改用其他來源。<button class="copybtn" type="button" data-copy-target="install-prompt-zh">複製</button></div>
+                <h3>把這段貼給其中一個 AI</h3>
+                <p>Claude Code 或 Codex 任選一邊貼一次。這不是要你手動下載：AI 會把安裝器放到系統暫存區，驗證正確後才在目前專案建立檔案。</p>
+                <div class="promptbox" id="install-prompt-zh">請直接在目前開啟的專案安裝 Cross-AI Progress Bridge，不要只解說。把 https://raw.githubusercontent.com/Nouischen/cross-ai-progress-bridge/v1.0.0/bootstrap/install.py 下載到作業系統暫存資料夾（不要存進專案），先驗證 SHA-256 必須完全等於 F54D20B41681D9E1F044F78C3A0A2971537482F4216D5B2A2BAE01729EF8AC90；不符就停止，不得換來源。用 Python 3.10 或更新版本執行已驗證的 install.py，`--target` 指向目前專案的絕對路徑；若缺少合格的 Python，先停止、不要修改專案，並用白話教我從官方來源安裝。若回傳 `INSTALL_NEEDS_CONSENT`，只列出偵測名稱並問我；只有我明確同意後，才用同一檔案加上 `--mode sidecar --accept-existing I_ACCEPT_SIDECAR` 重跑。不要叫我手動下載、解壓或搬檔，也不要自行讀取、搬移或覆蓋舊進度；最後回報 `INSTALL_OK` 或錯誤。<button class="copybtn" type="button" data-copy-target="install-prompt-zh">複製</button></div>
                 <div class="copy-status" role="status" aria-live="polite"></div>
-                <p>看到權限確認時，請先看清楚它只在目前測試資料夾與系統暫存區操作，再允許。若找不到 Git 或目前位置不適合，安裝器會用白話告訴你下一步，不會硬裝。</p>
+                <p class="fineprint">若跳出權限確認，先確認範圍只有「目前測試資料夾」與「系統暫存資料夾」再允許。雜湊不符、位置不安全或安裝失敗時，請讓 AI 停下，不要叫它繞過檢查。</p>
               </div>
             </article>
+
             <article class="step">
               <div class="num">3</div>
               <div>
-                <h3>用兩個全新對話驗證</h3>
-                <p>安裝完成先顯示 <b>NOT READY</b> 是正常的。它不會在同一個安裝視窗假裝驗證成功。</p>
+                <h3>做一次真的接力測試</h3>
+                <p>不需要任何狀態標章。直接測「能不能存、另一個新對話能不能讀」：</p>
+                <div class="mode-banner"><b>安裝器若回報「隔離共存模式」：</b>下面三個測試要求，以及以後所有接力要求，都必須以 <code>接力：</code> 開頭。例如：<code>接力：建立一筆叫「第一次接力測試」的任務，下一步是「到另一個新對話查看」，然後記錄進度。</code>、<code>接力：我有哪些進度還沒做完的？</code>、<code>接力：繼續第一次接力測試</code>。</div>
                 <div class="verify">
-                  <div class="vitem">全新 Claude Code 對話，第一句輸入<code>驗證接力</code></div>
-                  <div class="vitem">全新 Codex 對話，第一句輸入<code>驗證接力</code></div>
-                  <div class="vitem">兩邊都完成，任一邊輸入<code>完成驗證</code></div>
+                  <div class="vitem">在剛才安裝的對話輸入<code>建立一筆叫「第一次接力測試」的任務，下一步是「到另一個新對話查看」，然後記錄進度。</code></div>
+                  <div class="vitem">開一個全新對話；可用同一模型，也可換另一個模型。務必開啟同一個實體資料夾，再輸入<code>我有哪些進度還沒做完的？</code></div>
+                  <div class="vitem">看到「第一次接力測試」後，輸入<code>繼續第一次接力測試</code>確認它能讀到下一步，就完成了。</div>
                 </div>
-                <p>看到 <b>READY</b>，才代表兩邊真的指向同一個實體專案資料夾。</p>
+                <p>以後換對話或換模型，只要兩邊開的是同一份實體專案資料夾，就能讀到同一批進度檔。</p>
               </div>
             </article>
           </div>
@@ -330,15 +339,14 @@
       <section class="tint" id="commands">
         <div class="wrap">
           <span class="section-tag">Everyday language</span>
-          <h2>日常只要說人話</h2>
-          <p class="sub">進度格式、檔名、備份與衝突處理交給系統；你只需要說現在想做什麼。</p>
+          <h2>日常只要記住三句話</h2>
+          <p class="sub">進度格式、檔名、備份與修訂版檢查交給本機程式。你不必直接操作 Markdown 檔。</p>
+          <div class="mode-banner"><b>如果安裝結果是「隔離共存模式」：</b>所有指令前都加上 <code>接力：</code>，例如 <code>接力：記錄進度</code>。這樣才不會和你原本的指令混在一起。</div>
           <div class="command-grid">
-            <div class="command"><code>記錄進度</code><span>把目前工作整理成可接續的任務檔。</span></div>
-            <div class="command"><code>繼續上次進度</code><span>只有一筆就直接接續，多筆就列出讓你選。</span></div>
-            <div class="command"><code>我有哪些進度還沒做完的？</code><span>列出進行中與卡住的任務、更新日和下一步。</span></div>
-            <div class="command"><code>繼續某任務</code><span>用標題或 task ID 指定想接手的工作。</span></div>
-            <div class="command"><code>列出進行中</code><span>快速查看所有尚未完成的事項。</span></div>
-            <div class="command"><code>重設驗證</code><span>環境改變後重新跑 Claude Code／Codex 雙邊驗證。</span></div>
+            <div class="command"><code>記錄進度</code><span>把目前工作的目標、完成項目、決定、卡點與下一步存起來。</span></div>
+            <div class="command"><code>我有哪些進度還沒做完的？</code><span>列出進行中與卡住的任務、最後更新時間和下一步。</span></div>
+            <div class="command"><code>繼續上次進度</code><span>只有一筆就直接接續；有多筆時先列出讓你選。</span></div>
+            <div class="command"><code>繼續某任務</code><span>直接用任務標題指定要接手的工作。</span></div>
           </div>
         </div>
       </section>
@@ -346,14 +354,14 @@
       <section id="compat">
         <div class="wrap">
           <span class="section-tag">Compatibility</span>
-          <h2>像插座一樣加上去，但不亂碰原系統</h2>
-          <p class="sub">相容不是一句「保證不衝突」。真正安全的做法，是先辨識、取得同意，再沿用原本的路徑與狀態語意。</p>
+          <h2>已有自己的系統？隔離共存，不強行整合</h2>
+          <p class="sub">它的相容策略是「在旁邊加一個獨立插座」，不是搬家工具。發現既有規則或進度名稱時，安裝器先停下且不寫任何檔案，等你明確同意後才安裝自己的區域。</p>
           <div class="compat">
-            <div class="socket"><h3>已經有自己的簡單系統？</h3><p>安裝器先只看檔名。發現 `CLAUDE.md`、`AGENTS.md`、progress、tasks、notes/current 或類似來源時，會列出準備讀取的檔案並問你是否允許整合。</p></div>
+            <div class="socket"><h3>共存模式的觸發詞</h3><p>原本的系統照舊使用；這套接力功能一律用 <b>「接力：」</b>開頭，例如「接力：我有哪些進度還沒做完的？」兩套規則比較不會搶同一句話。</p></div>
             <div class="checks">
-              <div><span>1️⃣</span><p><b>不先偷讀內容</b><span>探索階段只看名稱；私密筆記、憑證與病歷不在讀取範圍。</span></p></div>
-              <div><span>2️⃣</span><p><b>不搬家、不蓋掉</b><span>沿用既有路徑、格式與封存方式，修改前先備份。</span></p></div>
-              <div><span>3️⃣</span><p><b>對不起來就停</b><span>既有 status 無法可靠對應 active／blocked／done 時，交回給你決定，不自行發明。</span></p></div>
+              <div><span>1️⃣</span><p><b>偵測階段只看名稱</b><span>先列出可能衝突的檔名或資料夾名；未同意前不讀內容，也不寫入。</span></p></div>
+              <div><span>2️⃣</span><p><b>不搬、不讀、不覆寫舊進度</b><span>不遷移既有任務，不把舊資料轉格式，也不把兩套狀態硬湊在一起。</span></p></div>
+              <div><span>3️⃣</span><p><b>自己的檔案放在自己的區域</b><span>新進度放在 <code>AI_PROGRESS</code>；若需在入口規則加上標記區塊，會先備份。</span></p></div>
             </div>
           </div>
         </div>
@@ -362,11 +370,11 @@
       <section class="tint" id="safety">
         <div class="wrap">
           <span class="section-tag">Local & auditable</span>
-          <h2>資料留在你的資料夾，規則公開可查</h2>
-          <p class="sub">這個專案沒有後端、帳號、資料庫或遙測。GitHub 提供的是安裝規格；你的任務內容不會回傳給作者。</p>
+          <h2>資料留在專案裡，格式公開可讀</h2>
+          <p class="sub">這個專案沒有後端、帳號、資料庫或遙測。安裝器與執行程式都在 GitHub 公開；任務內容只寫入你目前的本機專案資料夾。</p>
           <div class="trust-grid">
-            <article class="trust-card"><h3>你會得到什麼</h3><ul><li>純文字 Markdown，任何編輯器都能打開</li><li>固定版本 URL＋SHA-256 完整性檢查</li><li>修改既有檔案前備份</li><li>偵測同時變更時保留 conflict，不覆蓋原檔</li><li>Claude Code 與 Codex 的 fresh-session 證據</li></ul></article>
-            <article class="trust-card warning"><h3>不要放什麼</h3><ul><li>未去識別化病歷或病人資料</li><li>身分證號、電話等敏感個資</li><li>密碼、API key、憑證與私鑰</li><li>你不希望任何 AI 讀取的私密筆記</li><li>需要兩個 AI 同時編輯的任務</li></ul></article>
+            <article class="trust-card"><h3>系統會做的事</h3><ul><li>用純文字 Markdown 保存任務</li><li>固定版本網址＋SHA-256 核對安裝器</li><li>修改橋接器碰到的既有入口檔前先備份</li><li>用 revision 檢查降低過期內容覆寫</li><li>同一時間只讓一個 AI 寫同一筆任務</li></ul></article>
+            <article class="trust-card warning"><h3>不要拿來存的內容</h3><ul><li>未去識別化病歷或病人資料</li><li>身分證號、電話等敏感個資</li><li>密碼、API key、憑證與私鑰</li><li>你不希望任何 AI 讀到的私密筆記</li><li>兩個 AI 同時編輯中的同一項工作</li></ul></article>
           </div>
         </div>
       </section>
@@ -375,19 +383,22 @@
         <div class="wrap">
           <span class="section-tag">FAQ</span>
           <h2>先把幾個容易誤會的地方說清楚</h2>
-          <details><summary>一般 ChatGPT 或 claude.ai 網頁聊天框可以用嗎？</summary><p>不行。這套系統需要 Claude Code 與 Codex 能讀寫同一個本機專案資料夾。一般網頁聊天沒有共同的本機檔案空間。</p></details>
-          <details><summary>為什麼第一次不建議在 Git 專案測？</summary><p>Claude Code Desktop 對 Git 專案可能建立隔離 worktree；如果 Claude Code 和 Codex 指向不同 checkout，就算看起來是同一個專案，也不會讀到同一份未提交進度。熟悉 Git 的人可以使用，但要自行確認兩邊是同一個實體 checkout。</p></details>
-          <details><summary>它會自動判斷哪個模型比較擅長嗎？</summary><p>不會。它保存可交班的工作狀態，不替你評比模型。你可以依任務、實際表現、額度與偏好決定何時切換，再把同一份進度交給另一邊。</p></details>
-          <details><summary>是不是完全不會衝突？</summary><p>它會用備份、revision、候選檔與 conflicts 目錄降低覆寫風險，但只支援依序交班。兩個 AI 同時修改同一任務仍可能衝突，因此明確禁止這樣使用。</p></details>
-          <details><summary>為什麼安裝後還要跑兩次「驗證接力」？</summary><p>「檔案已建立」不等於「兩個新 session 都真的會載入」。fresh 驗證要求 Claude Code 與 Codex 各自在全新對話的第一句讀取同一個隨機測試任務，兩邊證據一致後才切成 READY。</p></details>
+          <details><summary>一般 ChatGPT 或 claude.ai 網頁聊天框可以用嗎？</summary><p>單純的網頁聊天通常不能直接讀寫同一個本機專案資料夾，因此不在這套工具的支援範圍。這套是給 Claude Code 與 Codex 這類能操作本機專案的工具使用。</p></details>
+          <details><summary>為什麼需要 Python 3.10 以上？這還算「不用下載」嗎？</summary><p>你不用手動下載、解壓或搬動這個 GitHub 專案；AI 會處理固定版本的安裝器。Python 3.10 以上是執行安裝器與日常橋接程式的必要環境。若版本太舊或沒有安裝，提示詞會要求 AI 先停下並帶你安裝新版 Python。</p></details>
+          <details><summary>Git 專案可以用嗎？</summary><p>可以，但 Claude Code 與 Codex 必須開啟同一個實體 checkout。若其中一邊使用另一個 worktree，即使專案名稱相同，也可能看不到同一份尚未提交的進度。第一次建議先在「文件」裡的空資料夾測成功。</p></details>
+          <details><summary>為什麼兩邊一定要開同一個資料夾？</summary><p>這套系統不靠雲端同步，而是讓兩個工具讀寫同一批本機檔案。資料夾不同，就像兩本不同的筆記本；它不會自動跨電腦或跨 checkout 傳送資料。</p></details>
+          <details><summary>發現我原本的系統後，它會怎麼做？</summary><p>第一次執行會只列出偵測到的名稱，回傳 <code>INSTALL_NEEDS_CONSENT</code>，且不寫入任何檔案。你同意後才建立隔離的橋接區域，日常指令改用「接力：」開頭；舊進度不會被讀取、遷移或覆寫。</p></details>
+          <details><summary>它會自動判斷哪個模型比較擅長嗎？</summary><p>不會。它只保存可接手的工作狀態，不替模型打分。你可以依任務、實際輸出、額度與自己的偏好決定何時切換。</p></details>
+          <details><summary>可以讓 Claude Code 和 Codex 同時工作嗎？</summary><p>請依序交班，不要讓兩邊同時修改同一筆任務。系統有修訂版檢查與備份降低覆寫風險，但不能把同時寫入變成零風險。</p></details>
+
         </div>
       </section>
 
       <section style="padding-top:30px">
         <div class="wrap final-cta">
-          <h2>下次換視窗，不必再從頭解釋。</h2>
-          <p>先用一個空白、無敏感資料的資料夾跑完三步驟。確認 READY 後，再把真正的工作一件一件交給它記錄。</p>
-          <div class="hero-actions"><a class="pill" href="#install">開始安裝 ↑</a><a class="ghost" href="https://github.com/Nouischen/cross-ai-progress-bridge" target="_blank" rel="noopener">GitHub 原始碼 ↗</a></div>
+          <h2>下次換對話，不必再從頭解釋。</h2>
+          <p>先在「文件」裡建立一個空白、無敏感資料的測試資料夾，讓 AI 安裝，再用另一個全新對話把測試任務叫出來。</p>
+          <div class="hero-actions"><a class="pill" href="#install">從第一步開始 ↑</a><a class="ghost" href="https://github.com/Nouischen/cross-ai-progress-bridge" target="_blank" rel="noopener">GitHub 原始碼 ↗</a></div>
         </div>
       </section>
     </div>
@@ -398,30 +409,54 @@
           <div>
             <span class="eyebrow">Claude Code × Codex × fresh sessions</span>
             <h1>Switch chats or models.<br><span class="underline">Keep the progress.</span></h1>
-            <p class="lead">A local Markdown handoff system shared by Claude Code, Codex, and fresh sessions of the same tool.</p>
-            <div class="hero-actions"><a class="pill" href="#install-en">Start in three steps ↓</a><a class="ghost" href="https://github.com/Nouischen/cross-ai-progress-bridge" target="_blank" rel="noopener">View on GitHub ↗</a></div>
-            <div class="micro">No manual download · No Obsidian · No account or telemetry · Local Markdown</div>
+            <p class="lead">Keep the handoff-ready work state in your project. A fresh chat in the same tool—or the other tool—can continue from the same local files.</p>
+            <div class="hero-actions"><a class="pill" href="#install-en">Follow the setup ↓</a><a class="ghost" href="https://github.com/Nouischen/cross-ai-progress-bridge" target="_blank" rel="noopener">View on GitHub ↗</a></div>
+            <div class="micro">No manual project download · Python 3.10+ required · No Obsidian · No account or telemetry</div>
           </div>
           <div class="demo" aria-label="Cross-AI handoff illustration">
-            <div class="browserbar"><i class="dot" style="background:#f36b5b"></i><i class="dot" style="background:#f6c453"></i><i class="dot" style="background:#63c88a"></i><span>progress/current-task.md</span></div>
-            <div class="handoff"><div class="agent"><div class="avatar" style="background:#ffe7df">C</div><div><strong>Claude Code</strong><small>records progress</small></div></div><div class="file-card"><div class="file-title"><span>Current task</span><span class="ready">ACTIVE</span></div><div class="taskline"><span class="check done">✓</span><span>Decision recorded</span></div><div class="taskline"><span class="check"></span><span>Next step preserved</span></div><div class="taskline"><span class="check"></span><span>Blocker made explicit</span></div></div><div class="arrowline">one local file</div><div class="agent" style="margin-top:17px"><div class="avatar" style="background:#e6efff">G</div><div><strong>Codex</strong><small>continues the work</small></div></div></div>
+            <div class="browserbar"><i class="dot" style="background:#f36b5b"></i><i class="dot" style="background:#f6c453"></i><i class="dot" style="background:#63c88a"></i><span>AI_PROGRESS/tasks/current-task.md</span></div>
+            <div class="handoff"><div class="agent"><div class="avatar" style="background:#ffe7df">C</div><div><strong>Claude Code</strong><small>records progress</small></div></div><div class="file-card"><div class="file-title"><span>Current task</span><span class="active-label">ACTIVE</span></div><div class="taskline"><span class="check done">✓</span><span>Decision recorded</span></div><div class="taskline"><span class="check"></span><span>Next step preserved</span></div><div class="taskline"><span class="check"></span><span>Blocker made explicit</span></div></div><div class="arrowline">the same physical folder</div><div class="agent" style="margin-top:17px"><div class="avatar" style="background:#e6efff">G</div><div><strong>Codex</strong><small>continues the work</small></div></div></div>
           </div>
         </div>
       </header>
 
-      <section class="tint"><div class="wrap"><span class="section-tag">Why it matters</span><h2>Keep the useful state, not the entire chat</h2><p class="sub">The bridge records goals, completed work, next steps, blockers, decisions, evidence, relevant files, and rerun instructions. It supports both a new chat with the same model and a handoff across models.</p><div class="cards"><article class="card"><div class="icon">🪟</div><h3>Same model, fresh chat</h3><p>Move from one Claude Code or Codex session to another without replaying the whole conversation.</p></article><article class="card"><div class="icon">⇄</div><h3>Claude ↔ Codex</h3><p>Choose the model for each stage yourself; the bridge carries the work state between them.</p></article><article class="card"><div class="icon">☑</div><h3>Ask what is unfinished</h3><p>List active and blocked tasks, their latest update, and the next action in plain language.</p></article></div></div></section>
+      <section class="tint">
+        <div class="wrap"><span class="section-tag">Why it matters</span><h2>Carry the useful state, not the whole chat</h2><p class="sub">Goals, completed work, decisions, blockers, and next steps are written by a deterministic local program to readable Markdown. This works for a new chat in the same tool and for Claude Code ↔ Codex handoffs.</p><div class="cards"><article class="card"><div class="icon">🪟</div><h3>Same tool, fresh chat</h3><p>Move from one Claude Code or Codex session to another without replaying the entire conversation.</p></article><article class="card"><div class="icon">⇄</div><h3>Claude Code ↔ Codex</h3><p>Choose each tool by its actual output, your task, preference, or remaining quota. The bridge does not invent model rankings.</p></article><article class="card"><div class="icon">☑</div><h3>Ask what is unfinished</h3><p>List active and blocked tasks, their latest update, and the next action in plain language.</p></article></div></div>
+      </section>
 
-      <section id="install-en"><div class="wrap"><span class="section-tag">No-download setup</span><h2>Install by talking to your AI</h2><p class="sub">The v1.0.0 installer interface has been end-to-end tested in Traditional Chinese. You do not manually download, unzip, or move files.</p><div class="setup-note"><span>⚠️</span><div><strong>Start with a new, empty, non-Git test folder.</strong>Never test with patient records, unredacted personal data, passwords, API keys, or credentials.</div></div><div class="steps">
-        <article class="step"><div class="num">1</div><div><h3>Create and open a safe test folder</h3><p>In Documents, create a folder named <b>AI Progress Bridge Test</b>. Open that exact folder as a Local project in Claude Code or Codex. Do not use your Desktop root or home directory.</p></div></article>
-        <article class="step"><div class="num">2</div><div><h3>Paste this into either Claude Code or Codex</h3><div class="promptbox" id="install-prompt-en">Download https://raw.githubusercontent.com/Nouischen/cross-ai-progress-bridge/v1.0.0/INSTALL.md to the system temporary directory, verify that its SHA-256 is 62B052F6791BDA02C6749B3FD8FEDF320C3A4EE969EC8D32C432E438032C4FA2, read it in full, and follow it step by step to install in the currently open project. Do not merely explain the steps; perform the installation. If the download is incomplete or the hash differs, stop without guessing or using another source.<button class="copybtn" type="button" data-copy-target="install-prompt-en">Copy</button></div><div class="copy-status" role="status" aria-live="polite"></div></div></article>
-        <article class="step"><div class="num">3</div><div><h3>Verify from two fresh sessions</h3><div class="verify"><div class="vitem">Fresh Claude Code session; first message:<code>驗證接力</code></div><div class="vitem">Fresh Codex session; first message:<code>驗證接力</code></div><div class="vitem">After both pass, run:<code>完成驗證</code></div></div><p>The tested command surface is currently Traditional Chinese. READY means both tools proved they can read the same physical project folder.</p></div></article>
-      </div></div></section>
+      <section id="install-en">
+        <div class="wrap">
+          <span class="section-tag">Guided setup</span>
+          <h2>Set it up once, then use plain language</h2>
+          <p class="sub">You do not download a ZIP, unzip a repository, or move its files. Create a safe empty folder, then paste one short prompt into Claude Code or Codex. The AI downloads a pinned installer to the OS temporary directory, checks its hash, and runs it.</p>
+          <div class="setup-note"><span aria-hidden="true">⚠️</span><div><strong>Use a new, empty test folder first.</strong>Do not test in a folder containing patient records, unredacted personal data, passwords, API keys, credentials, or other sensitive material.</div></div>
+          <div class="steps">
+            <article class="step"><div class="num">1</div><div><h3>Create an empty folder inside Documents</h3><div class="os-grid"><div class="os"><b>Windows</b><ol><li>Open File Explorer.</li><li>Select Documents.</li><li>Right-click → New → Folder.</li><li>Name it “AI Progress Bridge Test”.</li><li>Open this folder as the project in Claude Code or Codex.</li></ol></div><div class="os"><b>macOS</b><ol><li>Open Finder.</li><li>Select Documents.</li><li>Choose File → New Folder.</li><li>Name it “AI Progress Bridge Test”.</li><li>Open this folder as the project in Claude Code or Codex.</li></ol></div></div><p>Do not open the drive root, your home directory, or the Desktop root as the project.</p><div class="prereq"><b>Python 3.10 or newer is required.</b>If you are unsure, the prompt below tells the AI to check first. If Python is missing or too old, the AI must stop without changing the project and guide you through installing a current version.</div></div></article>
 
-      <section class="tint"><div class="wrap"><span class="section-tag">Capabilities</span><h2>What is included</h2><div class="command-grid"><div class="command"><code>記錄進度</code><span>Record or update the current task.</span></div><div class="command"><code>繼續上次進度</code><span>Resume the latest unfinished task.</span></div><div class="command"><code>我有哪些進度還沒做完的？</code><span>List unfinished and blocked work.</span></div><div class="command"><code>驗證接力</code><span>Prove a fresh session reads the shared state.</span></div><div class="command"><code>完成驗證</code><span>Switch to READY after both surfaces pass.</span></div><div class="command"><code>重設驗證</code><span>Start a new dual-surface verification run.</span></div></div></div></section>
+            <article class="step"><div class="num">2</div><div><h3>Paste this into either tool</h3><p>Paste it once into Claude Code or Codex. The AI—not you—handles the download and integrity check.</p><div class="promptbox" id="install-prompt-en">Install Cross-AI Progress Bridge in the currently open project. First confirm that Python 3.10 or newer is available. If Python is missing or too old, stop, do not modify the project, and guide me through installing a current version in plain language. Download https://raw.githubusercontent.com/Nouischen/cross-ai-progress-bridge/v1.0.0/bootstrap/install.py to the operating system temporary directory and verify that its SHA-256 is exactly F54D20B41681D9E1F044F78C3A0A2971537482F4216D5B2A2BAE01729EF8AC90. If it differs, stop and do not use another source. If the hash matches, run it with Python 3.10 or newer and point --target to the current project. If it returns INSTALL_NEEDS_CONSENT, list the detected names and ask whether I approve isolated sidecar mode; do not rerun without my explicit approval. Only after I approve, rerun with --mode sidecar --accept-existing I_ACCEPT_SIDECAR. Perform the installation instead of merely explaining it, then report the installed mode, everyday trigger phrase, and simple functional test.<button class="copybtn" type="button" data-copy-target="install-prompt-en">Copy</button></div><div class="copy-status" role="status" aria-live="polite"></div><p class="fineprint">If a permission dialog appears, confirm that it is limited to the current test folder and the OS temporary directory. Never ask the AI to bypass a hash mismatch, unsafe-location rejection, or installer error.</p></div></article>
 
-      <section><div class="wrap"><span class="section-tag">Compatibility & privacy</span><h2>Additive by design</h2><p class="sub">If the installer finds an existing progress system, `CLAUDE.md`, or `AGENTS.md`, it inventories names first and asks for consent before reading or integrating. It preserves existing content, stops when status semantics cannot be mapped safely, and never uploads project data.</p><div class="trust-grid"><article class="trust-card"><h3>Local and auditable</h3><ul><li>Plain Markdown files</li><li>Version-pinned URL and SHA-256</li><li>No backend, account, database, or telemetry</li><li>Backups and conflict preservation</li><li>Open installation specification</li></ul></article><article class="trust-card warning"><h3>Important limits</h3><ul><li>Use one AI at a time</li><li>Both tools must open the same physical folder</li><li>Web-only chats are unsupported</li><li>Do not store secrets or unredacted personal data</li><li>Git worktrees require advanced manual checking</li></ul></article></div></div></section>
+            <article class="step"><div class="num">3</div><div><h3>Test a real handoff</h3><p>Test whether one session can save and another fresh session can read:</p><div class="mode-banner"><b>If the installer reports sidecar mode:</b> every test request below—and every later bridge request—must begin with <code>接力：</code>. For example: <code>接力：建立一筆叫「First handoff test」的任務，下一步是「到另一個新對話查看」，然後記錄進度。</code>, <code>接力：我有哪些進度還沒做完的？</code>, and <code>接力：繼續 First handoff test</code>.</div><div class="verify"><div class="vitem">In the installing session, ask it to create a task named “First handoff test,” set the next step to “check it from another fresh session,” and record progress.</div><div class="vitem">Start a fresh session in the same tool or the other tool. Open the exact same physical folder, then ask:<code>我有哪些進度還沒做完的？</code></div><div class="vitem">After “First handoff test” appears, ask:<code>繼續 First handoff test</code>and confirm that it reads the saved next step.</div></div><p>The everyday command surface is currently Traditional Chinese. No status badge is required for normal use.</p></div></article>
+          </div>
+        </div>
+      </section>
 
-      <section style="padding-top:30px"><div class="wrap final-cta"><h2>Open a fresh chat without starting over.</h2><p>Try the three-step setup in a clean folder, reach READY, then start recording real work one task at a time.</p><div class="hero-actions"><a class="pill" href="#install-en">Start setup ↑</a><a class="ghost" href="https://github.com/Nouischen/cross-ai-progress-bridge" target="_blank" rel="noopener">View source ↗</a></div></div></section>
+      <section class="tint">
+        <div class="wrap"><span class="section-tag">Everyday language</span><h2>Three phrases cover normal use</h2><p class="sub">The local program handles file names, Markdown structure, backups, and revision checks.</p><div class="mode-banner"><b>Sidecar mode:</b>prefix every bridge request with <code>接力：</code>, such as <code>接力：記錄進度</code>. Your original system keeps its existing commands.</div><div class="command-grid"><div class="command"><code>記錄進度</code><span>Record or update the current task.</span></div><div class="command"><code>我有哪些進度還沒做完的？</code><span>List active and blocked work with next steps.</span></div><div class="command"><code>繼續上次進度</code><span>Resume it when only one task is unfinished; if several remain, choose from a short list.</span></div><div class="command"><code>繼續某任務</code><span>Resume a task by its title.</span></div></div></div>
+      </section>
+
+      <section id="compat-en">
+        <div class="wrap"><span class="section-tag">Compatibility</span><h2>Isolated coexistence, not forced integration</h2><p class="sub">If the installer sees names that suggest an existing instruction or progress system, it returns <code>INSTALL_NEEDS_CONSENT</code> and makes no changes. It installs its own sidecar area only after explicit approval.</p><div class="compat"><div class="socket"><h3>The sidecar prefix</h3><p>Your original system continues unchanged. Bridge requests begin with <b>接力：</b>, keeping the two command spaces separate.</p></div><div class="checks"><div><span>1️⃣</span><p><b>Name-only detection</b><span>Before consent it lists potentially relevant names; it does not read their contents or write files.</span></p></div><div><span>2️⃣</span><p><b>No migration, reading, or overwrite of old progress</b><span>It does not convert legacy tasks or pretend that two status systems are equivalent.</span></p></div><div><span>3️⃣</span><p><b>Its files stay in its own area</b><span>New tasks live under <code>AI_PROGRESS</code>. Marked entry instructions are backed up before modification.</span></p></div></div></div></div>
+      </section>
+
+      <section class="tint">
+        <div class="wrap"><span class="section-tag">Local & auditable</span><h2>Readable files in your project</h2><p class="sub">There is no backend, account, database, or telemetry. The public GitHub repository supplies a pinned installer; task content remains in the currently open local project.</p><div class="trust-grid"><article class="trust-card"><h3>Designed for</h3><ul><li>Plain Markdown task files</li><li>Pinned installer URL and SHA-256 check</li><li>Backups before bridge-owned entry changes</li><li>Revision checks against stale writes</li><li>One writer at a time</li></ul></article><article class="trust-card warning"><h3>Do not store</h3><ul><li>Unredacted patient or personal data</li><li>Passwords, API keys, credentials, or private keys</li><li>Notes you do not want either AI to read</li><li>A task being edited by both tools at once</li><li>Data requiring automatic cloud sync</li></ul></article></div></div>
+      </section>
+
+      <section>
+        <div class="wrap"><span class="section-tag">FAQ</span><h2>Important boundaries</h2><details><summary>Can ordinary ChatGPT or claude.ai web chats use it?</summary><p>Not by themselves. This bridge requires tools that can read and write the same local project folder, such as Claude Code and Codex.</p></details><details><summary>Does “no manual download” mean no prerequisite?</summary><p>No. Python 3.10 or newer is required. The AI handles downloading and checking this project’s installer; if Python is missing or too old, it must stop before project changes and help you install a current version.</p></details><details><summary>Can I use a Git repository?</summary><p>Yes, only when both tools open the same physical checkout. Different worktrees may share a project name while containing different uncommitted files. Use a clean Documents folder for your first test.</p></details><details><summary>Does sidecar mode merge my old tasks?</summary><p>No. It deliberately does not read, migrate, or overwrite old progress. It creates an isolated task area and uses the <code>接力：</code> prefix.</p></details><details><summary>Can both tools edit at the same time?</summary><p>Use sequential handoffs. Backups and revision checks reduce stale overwrites, but they do not make simultaneous editing risk-free.</p></details></div>
+      </section>
+
+      <section style="padding-top:30px"><div class="wrap final-cta"><h2>Start a fresh chat without starting over.</h2><p>Create a clean, non-sensitive folder inside Documents, let the AI install the pinned bridge, then retrieve the test task from another fresh session.</p><div class="hero-actions"><a class="pill" href="#install-en">Start at step one ↑</a><a class="ghost" href="https://github.com/Nouischen/cross-ai-progress-bridge" target="_blank" rel="noopener">View source ↗</a></div></div></section>
     </div>
   </main>
 
@@ -450,6 +485,8 @@
         const key = node.dataset.t;
         if (translations[lang][key]) node.textContent = translations[lang][key];
       });
+      document.querySelectorAll('[data-nav-target="install"]').forEach(node => node.setAttribute('href', lang === 'en' ? '#install-en' : '#install'));
+      document.querySelectorAll('[data-nav-target="compat"]').forEach(node => node.setAttribute('href', lang === 'en' ? '#compat-en' : '#compat'));
       try { localStorage.setItem('progress-bridge-lang', lang); } catch (_) {}
     }
 

@@ -1,0 +1,499 @@
+#!/usr/bin/env python3
+"""Standalone installer for Cross-AI Progress Bridge.
+
+This generated file contains a versioned, SHA-256-verified payload and uses only
+the Python standard library. Run it from Claude Code or Codex; users do not need
+to move project files by hand.
+"""
+
+from __future__ import annotations
+
+import argparse
+import base64
+import hashlib
+import json
+import os
+import shutil
+import stat
+import sys
+import tempfile
+import uuid
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+VERSION = "1.0.0"
+PAYLOAD_SHA256 = "__PAYLOAD_SHA256__"
+PAYLOAD_B64 = "__PAYLOAD_B64__"
+MARKER_START = "<!-- CROSS-AI-PROGRESS-BRIDGE:START -->"
+MARKER_END = "<!-- CROSS-AI-PROGRESS-BRIDGE:END -->"
+CONSENT_TEXT = "I_ACCEPT_SIDECAR"
+CONSENT_EXIT = 20
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+
+class InstallError(RuntimeError):
+    pass
+
+
+def decode_payload() -> dict[str, str]:
+    try:
+        raw = base64.b64decode(PAYLOAD_B64, validate=True)
+    except (ValueError, TypeError) as exc:
+        raise InstallError(f"embedded payload cannot be decoded: {exc}") from exc
+    actual = hashlib.sha256(raw).hexdigest().upper()
+    if actual != PAYLOAD_SHA256:
+        raise InstallError(
+            f"embedded payload hash mismatch: expected {PAYLOAD_SHA256}, got {actual}"
+        )
+    try:
+        value = json.loads(raw.decode("utf-8"))
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise InstallError(f"embedded payload JSON is invalid: {exc}") from exc
+    if not isinstance(value, dict) or not all(
+        isinstance(key, str) and isinstance(item, str) for key, item in value.items()
+    ):
+        raise InstallError("embedded payload has an invalid structure")
+    return value
+
+
+def is_reparse_or_link(path: Path) -> bool:
+    if path.is_symlink():
+        return True
+    try:
+        info = path.stat(follow_symlinks=False)
+    except FileNotFoundError:
+        return False
+    except OSError as exc:
+        raise InstallError(f"cannot inspect path safely: {path}: {exc}") from exc
+    attributes = getattr(info, "st_file_attributes", 0)
+    reparse_flag = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    return bool(attributes & reparse_flag)
+
+
+def lexists(path: Path) -> bool:
+    return os.path.lexists(os.fspath(path))
+
+
+def ensure_relative(relative: str) -> Path:
+    value = Path(relative)
+    if value.is_absolute() or ".." in value.parts or not value.parts:
+        raise InstallError(f"unsafe relative path: {relative}")
+    return value
+
+
+def ensure_owned_path_safe(root: Path, relative: str) -> Path:
+    rel = ensure_relative(relative)
+    candidate = Path(os.path.abspath(os.fspath(root / rel)))
+    try:
+        common = Path(os.path.commonpath([os.fspath(root), os.fspath(candidate)]))
+    except ValueError as exc:
+        raise InstallError(f"path escapes project: {relative}") from exc
+    if os.path.normcase(os.fspath(common)) != os.path.normcase(os.fspath(root)):
+        raise InstallError(f"path escapes project: {relative}")
+
+    current = root
+    for part in rel.parts:
+        current = current / part
+        if lexists(current) and is_reparse_or_link(current):
+            raise InstallError(f"refusing link/junction/reparse path: {current}")
+    return candidate
+
+
+def validate_target(raw_target: str) -> Path:
+    expanded = Path(raw_target).expanduser()
+    absolute = Path(os.path.abspath(os.fspath(expanded)))
+    if not absolute.exists() or not absolute.is_dir():
+        raise InstallError(f"target is not an existing folder: {absolute}")
+    if is_reparse_or_link(absolute):
+        raise InstallError(f"target folder is a link/junction/reparse point: {absolute}")
+    if absolute.parent == absolute:
+        raise InstallError("do not install at a drive or filesystem root")
+
+    home = Path.home().resolve()
+    resolved = absolute.resolve()
+    forbidden = {home, (home / "Desktop").resolve()}
+    if resolved in forbidden:
+        raise InstallError("do not install in the home folder or Desktop root")
+    return resolved
+
+
+def candidate_names(root: Path) -> list[str]:
+    exact = {
+        ".agents",
+        ".claude",
+        ".codex",
+        "agents.md",
+        "agents.override.md",
+        "claude.local.md",
+        "claude.md",
+    }
+    patterns = (
+        "progress",
+        "state",
+        "tasks",
+        "handoff",
+        "current",
+        "進度",
+        "任務",
+        "交班",
+        "待續",
+        "進行中",
+    )
+    found: list[str] = []
+    for item in root.iterdir():
+        name = item.name
+        lower = name.casefold()
+        if lower in exact or any(pattern in lower for pattern in patterns):
+            found.append(name)
+    return sorted(set(found), key=str.casefold)
+
+
+def render_entry(template: str, mode: str) -> str:
+    if mode == "sidecar":
+        prefix_display = "接力："
+        trigger_rule = (
+            "Only route commands that begin with `接力：` to this bridge. "
+            "Leave unprefixed commands to the project's existing system."
+        )
+    else:
+        prefix_display = "none"
+        trigger_rule = (
+            "Route these exact intents to this bridge: 記錄進度、繼續上次進度、"
+            "繼續某任務、我有哪些進度還沒做完的、列出進行中。"
+        )
+    return (
+        template.replace("{{MODE}}", mode)
+        .replace("{{TRIGGER_PREFIX_DISPLAY}}", prefix_display)
+        .replace("{{TRIGGER_RULE}}", trigger_rule)
+        .rstrip()
+        + "\n"
+    )
+
+
+def decode_entry(path: Path) -> tuple[bytes, str]:
+    raw = path.read_bytes()
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError as exc:
+        raise InstallError(f"entry file is not UTF-8: {path.name}") from exc
+    return raw, text
+
+
+def detect_eol(text: str) -> str:
+    import re
+
+    match = re.search(r"\r\n|\n|\r", text)
+    return match.group(0) if match else "\n"
+
+
+def combined_entry(original_bytes: bytes, original_text: str, block: str) -> bytes:
+    if original_text.count(MARKER_START) or original_text.count(MARKER_END):
+        raise InstallError("an existing bridge marker is incomplete or duplicated")
+    eol = detect_eol(original_text)
+    rendered_block = block.rstrip("\r\n").replace("\n", eol) + eol
+    encoded_block = rendered_block.encode("utf-8")
+    if not original_text:
+        return original_bytes + encoded_block
+    if original_text.endswith(eol + eol):
+        separator = ""
+    elif original_text.endswith(eol):
+        separator = eol
+    else:
+        separator = eol + eol
+    return original_bytes + separator.encode("utf-8") + encoded_block
+
+
+def write_exclusive(path: Path, data: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("xb") as handle:
+        handle.write(data)
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
+def atomic_write(path: Path, data: bytes, mode: int | None = None) -> None:
+    descriptor, temp_name = tempfile.mkstemp(
+        prefix=f".{path.name}.bridge-", suffix=".tmp", dir=os.fspath(path.parent)
+    )
+    temp = Path(temp_name)
+    try:
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        if mode is not None:
+            os.chmod(temp, mode)
+        os.replace(temp, path)
+    finally:
+        if temp.exists():
+            temp.unlink()
+
+
+def relative_entry_paths(root: Path) -> tuple[str, str]:
+    claude = "CLAUDE.md"
+    override = root / "AGENTS.override.md"
+    codex = "AGENTS.override.md" if lexists(override) else "AGENTS.md"
+    return claude, codex
+
+
+def config_data(mode: str, claude_entry: str, codex_entry: str) -> dict[str, object]:
+    return {
+        "schema_version": 1,
+        "bridge_version": VERSION,
+        "installation_id": uuid.uuid4().hex,
+        "mode": mode,
+        "trigger_prefix": "接力：" if mode == "sidecar" else "",
+        "claude_entry": claude_entry,
+        "codex_entry": codex_entry,
+        "created_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+    }
+
+
+def verify_existing(root: Path, payload: dict[str, str]) -> bool:
+    config_path = root / "AI_PROGRESS" / "config.json"
+    marker_paths = [root / ".ai-progress", root / "AI_PROGRESS"]
+    marker_seen = any(lexists(item) for item in marker_paths)
+    if not marker_seen and not lexists(config_path):
+        return False
+    if not all(item.is_dir() and not is_reparse_or_link(item) for item in marker_paths):
+        raise InstallError("partial or unsafe existing bridge installation")
+    if not config_path.is_file() or is_reparse_or_link(config_path):
+        raise InstallError("existing bridge config is missing or unsafe")
+    try:
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise InstallError(f"existing bridge config is invalid: {exc}") from exc
+    if config.get("bridge_version") != VERSION or config.get("mode") not in {
+        "fresh",
+        "sidecar",
+    }:
+        raise InstallError("existing bridge version or mode is not supported by this installer")
+
+    for relative in (
+        ".ai-progress/bridge.py",
+        ".ai-progress/INSTRUCTIONS.md",
+        "AI_PROGRESS/README.md",
+    ):
+        path = ensure_owned_path_safe(root, relative)
+        expected = payload[relative].encode("utf-8")
+        if not path.is_file() or path.read_bytes() != expected:
+            raise InstallError(f"bridge-owned file drifted; refusing automatic repair: {relative}")
+
+    block = render_entry(payload["entry.template.md"], str(config["mode"]))
+    for key in ("claude_entry", "codex_entry"):
+        relative = str(config.get(key, ""))
+        path = ensure_owned_path_safe(root, relative)
+        if not path.is_file():
+            raise InstallError(f"existing bridge entry is missing: {relative}")
+        _, text = decode_entry(path)
+        if text.count(MARKER_START) != 1 or text.count(MARKER_END) != 1:
+            raise InstallError(f"existing bridge marker count is invalid: {relative}")
+        start = text.index(MARKER_START)
+        end = text.index(MARKER_END, start) + len(MARKER_END)
+        normalized = text[start:end].replace("\r\n", "\n").replace("\r", "\n")
+        if normalized != block.rstrip("\n"):
+            raise InstallError(f"existing bridge entry drifted: {relative}")
+
+    print("ALREADY_INSTALLED")
+    print(f"Cross-AI Progress Bridge v{VERSION} is already installed and verified.")
+    return True
+
+
+def install(root: Path, mode: str, payload: dict[str, str]) -> None:
+    claude_entry, codex_entry = relative_entry_paths(root)
+    entry_block = render_entry(payload["entry.template.md"], mode)
+    entry_plan: list[tuple[Path, bool, bytes, bytes, int | None]] = []
+
+    for relative in dict.fromkeys((claude_entry, codex_entry)):
+        path = ensure_owned_path_safe(root, relative)
+        existed = lexists(path)
+        if existed:
+            if not path.is_file() or is_reparse_or_link(path):
+                raise InstallError(f"entry path is not a regular file: {relative}")
+            original_bytes, original_text = decode_entry(path)
+            original_mode = stat.S_IMODE(path.stat(follow_symlinks=False).st_mode)
+        else:
+            original_bytes, original_text, original_mode = b"", "", None
+        replacement = combined_entry(original_bytes, original_text, entry_block)
+        entry_plan.append((path, existed, original_bytes, replacement, original_mode))
+
+    owned_roots = [root / ".ai-progress", root / "AI_PROGRESS"]
+    if any(lexists(item) for item in owned_roots):
+        raise InstallError("bridge-owned path already exists; refusing partial overwrite")
+
+    changed_entries: list[tuple[Path, bool, bytes, int | None]] = []
+    created_roots: list[Path] = []
+    try:
+        for owned in owned_roots:
+            owned.mkdir()
+            created_roots.append(owned)
+
+        for relative in (
+            ".ai-progress/backups/install",
+            "AI_PROGRESS/tasks",
+            "AI_PROGRESS/archive",
+            "AI_PROGRESS/backups",
+            "AI_PROGRESS/conflicts",
+            "AI_PROGRESS/drafts",
+            "AI_PROGRESS/locks",
+        ):
+            ensure_owned_path_safe(root, relative).mkdir(parents=True, exist_ok=False)
+
+        for relative in (
+            ".ai-progress/bridge.py",
+            ".ai-progress/INSTRUCTIONS.md",
+            "AI_PROGRESS/README.md",
+        ):
+            path = ensure_owned_path_safe(root, relative)
+            write_exclusive(path, payload[relative].encode("utf-8"))
+            if relative.endswith("bridge.py") and os.name != "nt":
+                path.chmod(0o755)
+
+        config = config_data(mode, claude_entry, codex_entry)
+        config_path = ensure_owned_path_safe(root, "AI_PROGRESS/config.json")
+        write_exclusive(
+            config_path,
+            (json.dumps(config, ensure_ascii=False, indent=2) + "\n").encode("utf-8"),
+        )
+
+        backup_dir = ensure_owned_path_safe(root, ".ai-progress/backups/install")
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        for path, existed, original, replacement, original_mode in entry_plan:
+            if existed:
+                backup = backup_dir / f"{path.name}.{stamp}.{uuid.uuid4().hex[:8]}.bak"
+                write_exclusive(backup, original)
+            changed_entries.append((path, existed, original, original_mode))
+            atomic_write(path, replacement, original_mode)
+            if path.read_bytes() != replacement:
+                raise InstallError(f"entry read-back verification failed: {path.name}")
+            if original_mode is not None:
+                installed_mode = stat.S_IMODE(path.stat(follow_symlinks=False).st_mode)
+                if installed_mode != original_mode:
+                    raise InstallError(f"entry mode verification failed: {path.name}")
+
+        for relative in (
+            ".ai-progress/bridge.py",
+            ".ai-progress/INSTRUCTIONS.md",
+            "AI_PROGRESS/README.md",
+            "AI_PROGRESS/config.json",
+        ):
+            path = ensure_owned_path_safe(root, relative)
+            if not path.is_file() or is_reparse_or_link(path):
+                raise InstallError(f"installed file verification failed: {relative}")
+
+    except Exception:
+        entry_rollback_errors: list[str] = []
+        for path, existed, original, original_mode in reversed(changed_entries):
+            try:
+                if existed:
+                    atomic_write(path, original, original_mode)
+                elif lexists(path):
+                    path.unlink()
+            except Exception as exc:
+                entry_rollback_errors.append(f"{path}: {exc}")
+
+        # The install backups live inside .ai-progress.  If an entry cannot be
+        # restored, deleting that root would remove the only byte-for-byte
+        # recovery copy.  Keep both bridge-owned roots intact and make the
+        # operator recover deliberately instead of silently destroying it.
+        if entry_rollback_errors:
+            raise InstallError(
+                "installation failed and rollback was incomplete; entry recovery "
+                "failed. Preserve the bridge-owned folders and manually restore "
+                "the matching backup from .ai-progress/backups/install before "
+                "removing them: "
+                + "; ".join(entry_rollback_errors)
+            )
+
+        cleanup_errors: list[str] = []
+        for owned in reversed(created_roots):
+            try:
+                if owned.exists() and not is_reparse_or_link(owned):
+                    shutil.rmtree(owned)
+            except Exception as exc:
+                cleanup_errors.append(f"{owned}: {exc}")
+        if cleanup_errors:
+            raise InstallError(
+                "installation failed and rollback was incomplete: " + "; ".join(cleanup_errors)
+            )
+        raise
+
+    print("INSTALL_OK")
+    print(f"Cross-AI Progress Bridge v{VERSION} installed in {mode} mode.")
+    print(f"Claude entry: {claude_entry}")
+    print(f"Codex entry: {codex_entry}")
+    if mode == "sidecar":
+        print("Use the prefix 接力： for every bridge command.")
+    else:
+        print("You can now say: 記錄進度 / 我有哪些進度還沒做完的？")
+    print("Open the same physical folder in a fresh Claude Code or Codex session to continue.")
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Install Cross-AI Progress Bridge")
+    parser.add_argument("--target", default=".", help="Project folder (default: current folder)")
+    parser.add_argument("--mode", choices=("auto", "fresh", "sidecar"), default="auto")
+    parser.add_argument(
+        "--accept-existing",
+        default="",
+        help=f"Required for sidecar mode; exact value: {CONSENT_TEXT}",
+    )
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    try:
+        if sys.version_info < (3, 10):
+            raise InstallError("Python 3.10 or newer is required")
+        payload = decode_payload()
+        root = validate_target(args.target)
+        if verify_existing(root, payload):
+            return 0
+
+        found = candidate_names(root)
+        mode = args.mode
+        if mode == "auto":
+            if found:
+                print("INSTALL_NEEDS_CONSENT")
+                print("Existing AI/progress names found (contents were not read):")
+                for name in found:
+                    print(f"- {name}")
+                print("No project files were changed.")
+                print(
+                    "Ask the user whether to install in isolated sidecar mode. "
+                    f"Only after explicit consent, rerun with --mode sidecar --accept-existing {CONSENT_TEXT}."
+                )
+                return CONSENT_EXIT
+            mode = "fresh"
+        elif mode == "fresh" and found:
+            raise InstallError(
+                "fresh mode cannot modify a folder with existing AI/progress names; use consent-gated sidecar mode"
+            )
+        elif mode == "sidecar" and args.accept_existing != CONSENT_TEXT:
+            raise InstallError(
+                f"sidecar mode requires explicit --accept-existing {CONSENT_TEXT}"
+            )
+
+        install(root, mode, payload)
+        return 0
+    except InstallError as exc:
+        message = " ".join(str(exc).splitlines())
+        print(f"INSTALL_ERROR: {message}", file=sys.stderr)
+        return 1
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        message = " ".join(str(exc).splitlines())
+        print(f"INSTALL_ERROR: {message}", file=sys.stderr)
+        return 1
+    except Exception as exc:
+        print(f"INSTALL_ERROR: unexpected {type(exc).__name__}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,41 +1,54 @@
 # Security policy
 
-Cross-AI Progress Bridge is a set of local Markdown instructions. It has no backend, account system, analytics endpoint, or telemetry.
+Cross-AI Progress Bridge stores progress in local project files. It has no backend, account system, analytics endpoint, or telemetry. The one network step is performed by Claude Code or Codex to fetch the pinned installer; the installed bridge does not make network requests.
 
-## What the installer is allowed to do
+## Safe starting point
 
-- Read the fixed, versioned `INSTALL.md` from this repository.
-- Inspect file and directory names in the currently opened project.
-- Create bridge-owned Markdown files only after the safety checks in `INSTALL.md` pass.
-- Add a marked, removable entry block to the effective `CLAUDE.md` and Codex `AGENTS.md` entry.
-- Back up any existing file before a permitted modification.
+For a first test, create a new empty folder under Windows **Documents** or macOS **Documents**, then open that folder as the project. Do not install at a drive/filesystem root, the home folder, the Desktop root, or a directory containing multiple unrelated projects.
 
-## What it must not do
+Never put passwords, API keys, credentials, patient records, non-de-identified personal data, or other secrets in bridge progress files. Claude Code, Codex, Git, backup software, and file-sync services retain their own data and security policies.
 
-- Read secrets, credentials, patient records, or private notes as part of discovery.
-- Follow symlinks, junctions, reparse points, or unexpected hard links.
-- Overwrite an existing progress system without explicit consent.
-- Upload project content or send telemetry.
-- Claim cross-tool verification succeeded without a fresh-session PASS from both Claude Code and Codex.
+## Installer integrity
 
-## Safe use
+The v1.0.0 bootstrap is pinned to:
 
-Start in a new, empty, non-Git folder. Do not test in a folder containing medical records, personally identifiable information, passwords, API keys, or credentials. Use one AI at a time; simultaneous edits to the same task are unsupported.
+`https://raw.githubusercontent.com/Nouischen/cross-ai-progress-bridge/v1.0.0/bootstrap/install.py`
 
-The installer is fail-closed. If the environment cannot reliably inspect paths, hard-link counts, or atomic file operations, it should stop rather than weaken the checks.
+Required SHA-256:
 
-## Integrity
+`F54D20B41681D9E1F044F78C3A0A2971537482F4216D5B2A2BAE01729EF8AC90`
 
-The public v1.0.0 bootstrap prompt pins `INSTALL.md` to this exact URL:
+The AI must download this file to the operating-system temporary directory, verify the hash before execution, and stop if it differs. It must not silently use another branch, tag, mirror, or URL. The installer requires Python 3.10 or newer, uses only the standard library, and contains the release payload; it does not fetch dependencies at runtime.
 
-`https://raw.githubusercontent.com/Nouischen/cross-ai-progress-bridge/v1.0.0/INSTALL.md`
+## Filesystem behavior
 
-Its required SHA-256 is:
+The installer and runtime are designed to:
 
-`62B052F6791BDA02C6749B3FD8FEDF320C3A4EE969EC8D32C432E438032C4FA2`
+- Keep bridge-owned reads and writes under the selected project root.
+- Reject a drive/filesystem root, home folder, Desktop root, and bridge-owned symlink, junction, or reparse paths.
+- Create `.ai-progress/` and `AI_PROGRESS/` without overwriting an existing bridge-owned directory.
+- Add one marked entry block to `CLAUDE.md` and the effective Codex entry, backing up existing entry files before modification.
+- Serialize cooperating bridge `save` and `archive` operations for each task with a cross-process OS lock, then use revision checks, backups, temporary-file replacement, and conflict preservation.
+- Avoid telemetry and project-content uploads.
 
-Do not proceed if the downloaded file has a different hash.
+Cooperating bridge processes serialize writes to the same task; after the lock is released, a stale second write becomes a revision conflict instead of overwriting the newer task. The lock does not control manual edits, legacy tools, sync clients, or other third-party writers. An interrupted filesystem operation, disk failure, or antivirus interference can still cause partial state. Keep normal project backups and, as the simplest safe practice, allow only one AI at a time to modify a task.
+
+## Existing systems and sidecar consent
+
+Before a first install, detection examines top-level names only. If existing AI/progress-like names are found, the installer prints `INSTALL_NEEDS_CONSENT` and exits without changing the project.
+
+Only after explicit user approval may the same verified installer run with:
+
+`--mode sidecar --accept-existing I_ACCEPT_SIDECAR`
+
+Sidecar mode creates separate bridge data and routes only commands beginning with `接力：`. It does not read, migrate, transform, or overwrite legacy progress records. It does read and preserve the selected Claude/Codex entry file when appending the marked routing block; a backup is created first. This is isolated coexistence, not automatic compatibility mapping.
+
+## Trust boundary and limitations
+
+This project is not a sandbox for Claude Code or Codex. It cannot remove higher-priority instructions already loaded by a tool, restrict permissions granted to the host application, or authenticate the model or conversation. The onboarding test only confirms that two conversations can read the same task files.
+
+Both tools must open the same physical folder. In Git repositories, that means the same checkout/worktree; opening an isolated worktree gives each tool different local state. Cross-computer synchronization is outside this project.
 
 ## Reporting a vulnerability
 
-Please open a GitHub Security Advisory for the repository. Do not include real credentials, patient data, or other sensitive material in the report; use synthetic examples only.
+Please use the repository's GitHub Security Advisory flow. Do not include real credentials, patient data, or other sensitive material; reproduce issues with synthetic data only.

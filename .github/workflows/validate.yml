@@ -9,10 +9,36 @@ permissions:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    name: ${{ matrix.os }} / Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: "3.10"
+            release: false
+          - os: ubuntu-latest
+            python: "3.12"
+            release: true
+          - os: ubuntu-latest
+            python: "3.14"
+            release: false
+          - os: windows-latest
+            python: "3.12"
+            release: false
+          - os: macos-latest
+            python: "3.12"
+            release: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-      - run: python tests/validate_release.py
+          python-version: ${{ matrix.python }}
+      - name: Verify generated installer
+        run: python tools/build_installer.py --check
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+      - name: Validate release package
+        if: matrix.release
+        run: python tests/validate_release.py
