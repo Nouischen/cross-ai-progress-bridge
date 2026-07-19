@@ -12,7 +12,7 @@ PINNED_RAW_URL = (
     "https://raw.githubusercontent.com/Nouischen/"
     "cross-ai-progress-bridge/v1.0.0/bootstrap/install.py"
 )
-CANONICAL_INSTALL_PROMPT = "請直接在目前開啟的專案安裝 Cross-AI Progress Bridge，不要只解說。把 https://raw.githubusercontent.com/Nouischen/cross-ai-progress-bridge/v1.0.0/bootstrap/install.py 下載到作業系統暫存資料夾（不要存進專案），先驗證 SHA-256 必須完全等於 F54D20B41681D9E1F044F78C3A0A2971537482F4216D5B2A2BAE01729EF8AC90；不符就停止，不得換來源。用 Python 3.10 或更新版本執行已驗證的 install.py，`--target` 指向目前專案的絕對路徑；若缺少合格的 Python，先停止、不要修改專案，並用白話教我從官方來源安裝。若回傳 `INSTALL_NEEDS_CONSENT`，只列出偵測名稱並問我；只有我明確同意後，才用同一檔案加上 `--mode sidecar --accept-existing I_ACCEPT_SIDECAR` 重跑。不要叫我手動下載、解壓或搬檔，也不要自行讀取、搬移或覆蓋舊進度；最後回報 `INSTALL_OK` 或錯誤。"
+CANONICAL_INSTALL_PROMPT = "請直接在目前開啟的專案安裝 Cross-AI Progress Bridge，不要只解說。把 https://raw.githubusercontent.com/Nouischen/cross-ai-progress-bridge/v1.0.0/bootstrap/install.py 下載到作業系統暫存資料夾（不要存進專案），先驗證 SHA-256 必須完全等於 F54D20B41681D9E1F044F78C3A0A2971537482F4216D5B2A2BAE01729EF8AC90；不符就停止，不得換來源。用 Python 3.10 或更新版本執行已驗證的 install.py，--target 指向目前專案的絕對路徑；若缺少合格的 Python，先停止、不要修改專案，並用白話教我從官方來源安裝。若回傳 INSTALL_NEEDS_CONSENT，只列出偵測名稱並問我；只有我明確同意後，才用同一檔案加上 --mode sidecar --accept-existing I_ACCEPT_SIDECAR 重跑。不要叫我手動下載、解壓或搬檔，也不要自行讀取、搬移或覆蓋舊進度；最後回報 INSTALL_OK 或錯誤。"
 
 
 def read(path: str) -> str:
@@ -108,7 +108,7 @@ def main() -> None:
         assert prompt.encode("utf-8") == canonical_bytes, (
             f"{label} Chinese installer prompt differs at the UTF-8 byte level"
         )
-        for forbidden_token in ("```", "Code Block", "Markdown"):
+        for forbidden_token in ("`", "```", "Code Block", "Markdown"):
             assert forbidden_token not in prompt, (
                 f"{label} copied prompt contains forbidden token: {forbidden_token!r}"
             )

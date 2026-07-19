@@ -440,10 +440,14 @@ class BridgeTests(unittest.TestCase):
             linked = created.returncode == 0
         if not linked:
             self.skipTest("symlink or junction unavailable")
-        result = self.invoke("status", ok=False)
-        self.assertIn("symlink", result.stderr.lower())
-        if target.exists() or target.is_symlink():
-            os.rmdir(target)
+        try:
+            result = self.invoke("status", ok=False)
+            self.assertIn("symlink", result.stderr.lower())
+        finally:
+            if target.is_symlink():
+                target.unlink()
+            elif target.exists():
+                os.rmdir(target)
 
 
 if __name__ == "__main__":
