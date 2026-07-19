@@ -268,10 +268,11 @@ class BridgeTests(unittest.TestCase):
         self.invoke("status")
         self.draft("new.json")
         saved = self.invoke("save", "--draft", "new.json")
-        source = self.root / "AI_PROGRESS" / "tasks" / f"{saved['id']}.md"
-        target = self.root / "AI_PROGRESS" / "archive" / f"{saved['id']}.md"
-        original = source.read_bytes()
         bridge = self.load_bridge_module()
+        runtime_root = bridge.project_root()
+        source = runtime_root / "AI_PROGRESS" / "tasks" / f"{saved['id']}.md"
+        target = runtime_root / "AI_PROGRESS" / "archive" / f"{saved['id']}.md"
+        original = source.read_bytes()
         real_unlink = Path.unlink
 
         def fail_source_unlink(path, *args, **kwargs):
@@ -282,7 +283,7 @@ class BridgeTests(unittest.TestCase):
         with mock.patch.object(Path, "unlink", new=fail_source_unlink):
             with self.assertRaises(bridge.BridgeError) as raised:
                 bridge.cmd_archive(
-                    self.root,
+                    runtime_root,
                     SimpleNamespace(
                         task=saved["id"], expected_revision=saved["revision"]
                     ),
