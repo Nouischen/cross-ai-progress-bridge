@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#15231f">
+  <meta name="description" content="跨 AI 進度接力：讓 Claude Code、Codex 與不同新對話共用本機 Markdown 進度。換視窗、換模型，進度不用重講。">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <meta property="og:title" content="Cross-AI Progress Bridge｜跨 AI 進度接力">
+  <meta property="og:description" content="換視窗、換模型，進度不用重講。純本機 Markdown，免下載、免 Obsidian。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://cross-ai-progress-bridge.pages.dev">
+  <title>Cross-AI Progress Bridge｜跨 AI 進度接力</title>
+  <style>
+    :root {
+      --ink: #15231f;
+      --muted: #5e6d67;
+      --paper: #fbf8f1;
+      --card: #fffdf8;
+      --line: #dcd7ca;
+      --mint: #bfe4d4;
+      --mint-dark: #12614a;
+      --coral: #f3694f;
+      --coral-dark: #b93a2a;
+      --yellow: #f6cd5d;
+      --blue: #dce7ff;
+      --shadow: 0 20px 60px rgba(34, 51, 45, .10);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 8%, rgba(246, 205, 93, .24), transparent 27rem),
+        radial-gradient(circle at 92% 18%, rgba(191, 228, 212, .42), transparent 30rem),
+        var(--paper);
+      font-family: ui-rounded, "SF Pro Rounded", "PingFang TC", "Microsoft JhengHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.7;
+    }
+
+    a { color: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+    .wrap { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+    .skip {
+      position: absolute; left: 16px; top: -80px; z-index: 100;
+      background: var(--ink); color: white; padding: 10px 14px; border-radius: 8px;
+    }
+    .skip:focus { top: 16px; }
+
+    nav {
+      position: sticky; top: 0; z-index: 20;
+      border-bottom: 1px solid rgba(21, 35, 31, .09);
+      background: rgba(251, 248, 241, .88);
+      backdrop-filter: blur(14px);
+    }
+    .navrow { min-height: 68px; display: flex; align-items: center; gap: 22px; }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 900; letter-spacing: -.02em; }
+    .mark {
+      width: 35px; height: 35px; display: grid; place-items: center;
+      border: 2px solid var(--ink); border-radius: 12px; background: var(--yellow);
+      box-shadow: 3px 3px 0 var(--ink); font-size: 17px;
+    }
+    .navlinks { margin-left: auto; display: flex; align-items: center; gap: 19px; font-size: 14px; font-weight: 800; }
+    .navlinks a { text-decoration: none; }
+    .langswitch { display: inline-flex; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: #fff; }
+    .langswitch button { min-width: 42px; min-height: 36px; border: 0; background: transparent; color: var(--muted); padding: 5px 10px; border-radius: 999px; cursor: pointer; font-weight: 800; }
+    .langswitch button.active { color: white; background: var(--ink); }
+
+    .pill, .ghost {
+      display: inline-flex; justify-content: center; align-items: center; gap: 8px;
+      min-height: 48px; padding: 11px 19px; border-radius: 999px;
+      font-weight: 900; text-decoration: none; cursor: pointer;
+    }
+    .pill { border: 2px solid var(--ink); color: white; background: var(--coral); box-shadow: 4px 4px 0 var(--ink); }
+    .pill:hover { transform: translate(-1px, -1px); box-shadow: 6px 6px 0 var(--ink); }
+    .pill:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+    .ghost { border: 1px solid var(--line); background: rgba(255, 255, 255, .78); }
+
+    .hero { padding: 86px 0 62px; overflow: hidden; }
+    .hero-grid { display: grid; grid-template-columns: 1.04fr .96fr; align-items: center; gap: 62px; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 6px 11px; border-radius: 999px; background: var(--mint); color: #184d3e; font-size: 14px; font-weight: 900; }
+    h1 { margin: 20px 0 18px; max-width: 720px; font-size: clamp(44px, 6.5vw, 76px); line-height: 1.05; letter-spacing: -.055em; }
+    .underline { position: relative; white-space: nowrap; }
+    .underline::after { content: ""; position: absolute; height: 11px; left: 1%; right: -1%; bottom: 2px; z-index: -1; background: var(--yellow); border-radius: 80% 20% 70% 30%; transform: rotate(-1deg); }
+    .lead { margin: 0 0 25px; max-width: 690px; color: #41534c; font-size: clamp(18px, 2.2vw, 23px); }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+    .micro { margin-top: 16px; color: var(--muted); font-size: 14px; }
+
+    .demo {
+      position: relative; padding: 20px; border: 2px solid var(--ink); border-radius: 30px;
+      background: #fff; box-shadow: 11px 12px 0 var(--ink), var(--shadow); transform: rotate(1.2deg);
+    }
+    .demo::before { content: "LOCAL MARKDOWN"; position: absolute; right: -18px; top: -18px; padding: 7px 12px; border: 2px solid var(--ink); border-radius: 999px; background: var(--yellow); font-size: 11px; font-weight: 1000; letter-spacing: .08em; transform: rotate(4deg); }
+    .browserbar { display: flex; align-items: center; gap: 7px; padding-bottom: 15px; border-bottom: 1px solid #ece8df; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .browserbar span:last-child { margin-left: 6px; color: var(--muted); font: 12px/1.2 monospace; }
+    .handoff { padding: 22px 5px 4px; }
+    .agent { display: flex; align-items: center; gap: 12px; }
+    .avatar { width: 46px; height: 46px; display: grid; place-items: center; border: 2px solid var(--ink); border-radius: 15px; font-size: 21px; }
+    .agent strong { display: block; font-size: 15px; }
+    .agent small { color: var(--muted); }
+    .file-card { margin: 17px 0; padding: 16px; border: 1.5px solid var(--ink); border-radius: 17px; background: #f7fbf8; }
+    .file-title { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 12px; font: 800 13px/1.2 monospace; }
+    .ready { padding: 4px 8px; color: #0e5b43; background: var(--mint); border-radius: 999px; font: 900 10px/1.2 system-ui; }
+    .taskline { display: flex; gap: 9px; margin: 8px 0; color: #3d4c47; font-size: 13px; }
+    .check { width: 17px; height: 17px; flex: 0 0 auto; display: grid; place-items: center; border: 1.5px solid var(--ink); border-radius: 5px; font-size: 10px; }
+    .check.done { background: var(--mint); }
+    .arrowline { display: flex; justify-content: center; align-items: center; gap: 10px; color: var(--coral-dark); font-size: 12px; font-weight: 900; }
+    .arrowline::before, .arrowline::after { content: ""; width: 28%; border-top: 2px dashed var(--coral); }
+
+    section { padding: 78px 0; }
+    .tint { border-block: 1px solid rgba(21, 35, 31, .07); background: rgba(255, 255, 255, .50); }
+    .section-tag { color: var(--coral-dark); font-size: 13px; font-weight: 1000; letter-spacing: .10em; text-transform: uppercase; }
+    h2 { margin: 8px 0 15px; font-size: clamp(31px, 4vw, 48px); line-height: 1.15; letter-spacing: -.035em; }
+    .sub { max-width: 760px; margin: 0 0 32px; color: var(--muted); font-size: 18px; }
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .card { padding: 23px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); box-shadow: 0 8px 30px rgba(34, 51, 45, .045); }
+    .card .icon { width: 43px; height: 43px; display: grid; place-items: center; margin-bottom: 15px; border-radius: 14px; background: var(--blue); font-size: 21px; }
+    .card:nth-child(2) .icon { background: #ffe0d8; }
+    .card:nth-child(3) .icon { background: var(--mint); }
+    .card h3 { margin: 0 0 7px; font-size: 20px; }
+    .card p { margin: 0; color: var(--muted); }
+
+    .setup-note { display: flex; gap: 13px; align-items: flex-start; margin: 24px 0 30px; padding: 17px 18px; border-left: 5px solid var(--coral); border-radius: 10px 18px 18px 10px; background: #fff1ec; }
+    .setup-note strong { display: block; }
+    .steps { display: grid; gap: 18px; }
+    .step { display: grid; grid-template-columns: 62px 1fr; gap: 17px; padding: 24px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); }
+    .num { width: 52px; height: 52px; display: grid; place-items: center; border: 2px solid var(--ink); border-radius: 18px; background: var(--yellow); box-shadow: 3px 3px 0 var(--ink); font-size: 21px; font-weight: 1000; }
+    .step h3 { margin: 3px 0 8px; font-size: 23px; }
+    .step p { margin: 6px 0; color: var(--muted); }
+    .os-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; margin-top: 14px; }
+    .os { padding: 15px 17px; border: 1px dashed #b9b4a9; border-radius: 14px; background: #fbfaf5; }
+    .os b { color: var(--ink); }
+    .os ol { margin: 8px 0 0; padding-left: 22px; color: #435149; }
+
+    .promptbox { position: relative; margin-top: 15px; padding: 19px 106px 19px 19px; border: 2px solid var(--ink); border-radius: 16px; background: #13241f; color: #f5fbf8; box-shadow: 5px 5px 0 var(--mint-dark); overflow-wrap: anywhere; font: 13px/1.7 "SFMono-Regular", Consolas, monospace; }
+    .copybtn { position: absolute; right: 12px; top: 12px; min-width: 79px; padding: 8px 11px; border: 0; border-radius: 10px; color: var(--ink); background: var(--yellow); cursor: pointer; font-weight: 1000; }
+    .copybtn:focus-visible, .pill:focus-visible, .ghost:focus-visible, .langswitch button:focus-visible { outline: 3px solid #4f7cff; outline-offset: 3px; }
+    .copy-status { min-height: 22px; margin-top: 7px; color: var(--mint-dark); font-size: 13px; font-weight: 900; }
+
+    .verify { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; counter-reset: vstep; }
+    .vitem { padding: 17px; border: 1px solid var(--line); border-radius: 15px; background: #fbfaf5; }
+    .vitem::before { counter-increment: vstep; content: counter(vstep); display: inline-grid; place-items: center; width: 27px; height: 27px; margin-right: 6px; margin-bottom: 9px; border-radius: 50%; color: white; background: var(--coral); font-weight: 1000; }
+    .vitem code { display: block; margin-top: 7px; color: var(--ink); font-weight: 800; }
+
+    .command-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .command { display: flex; gap: 13px; align-items: flex-start; padding: 17px; border: 1px solid var(--line); border-radius: 15px; background: var(--card); }
+    .command code { flex: 0 0 auto; padding: 5px 8px; border-radius: 7px; color: #8d281e; background: #ffe3dc; font-weight: 800; }
+    .command span { color: var(--muted); }
+
+    .compat { display: grid; grid-template-columns: .92fr 1.08fr; gap: 26px; align-items: start; }
+    .socket { padding: 25px; border: 2px solid var(--ink); border-radius: 25px; background: var(--mint); box-shadow: 7px 7px 0 var(--ink); }
+    .socket h3 { margin-top: 0; font-size: 25px; }
+    .socket p { margin-bottom: 0; }
+    .checks { display: grid; gap: 13px; }
+    .checks div { display: grid; grid-template-columns: 34px 1fr; gap: 11px; padding: 15px; border: 1px solid var(--line); border-radius: 15px; background: var(--card); }
+    .checks b { display: block; }
+    .checks span { color: var(--muted); }
+
+    .trust-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .trust-card { padding: 22px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); }
+    .trust-card h3 { margin-top: 0; }
+    .trust-card ul { margin-bottom: 0; padding-left: 21px; color: var(--muted); }
+    .warning { border-color: #efb2a6; background: #fff6f3; }
+    details { border-top: 1px solid var(--line); }
+    details:last-child { border-bottom: 1px solid var(--line); }
+    summary { padding: 18px 2px; cursor: pointer; font-weight: 900; }
+    details p { margin: -5px 0 20px; max-width: 860px; color: var(--muted); }
+
+    .final-cta { padding: 44px; border: 2px solid var(--ink); border-radius: 30px; color: white; background: var(--ink); box-shadow: 10px 10px 0 var(--yellow); }
+    .final-cta h2 { margin-top: 0; }
+    .final-cta p { max-width: 720px; color: #d6e2dd; }
+    .final-cta .pill { color: var(--ink); background: var(--yellow); box-shadow: 4px 4px 0 #fff; }
+    .final-cta .ghost { color: white; border-color: #75847f; background: transparent; }
+
+    footer { padding: 48px 0; color: var(--muted); font-size: 14px; }
+    .footrow { display: flex; justify-content: space-between; gap: 20px; align-items: center; }
+    .footrow a { font-weight: 800; }
+    .lang-panel[hidden] { display: none !important; }
+
+    @media (max-width: 900px) {
+      .hero-grid, .compat { grid-template-columns: 1fr; }
+      .hero { padding-top: 62px; }
+      .demo { max-width: 610px; margin: 12px auto 0; transform: none; }
+      .cards { grid-template-columns: 1fr; }
+      .navlinks > a:not(.github-link) { display: none; }
+    }
+
+    @media (max-width: 760px) {
+      .wrap { width: min(100% - 26px, 680px); }
+      nav .brand span:last-child { display: none; }
+      .navrow { min-height: 60px; gap: 10px; }
+      .navlinks { gap: 9px; }
+      .github-link { display: none; }
+      .hero { padding: 50px 0 38px; }
+      h1 { font-size: clamp(42px, 13vw, 58px); }
+      .underline { white-space: normal; }
+      .underline::after { display: none; }
+      .hero-grid { gap: 38px; }
+      .hero-actions > * { width: 100%; }
+      section { padding: 56px 0; }
+      .step { grid-template-columns: 1fr; padding: 19px; }
+      .num { width: 45px; height: 45px; border-radius: 14px; }
+      .os-grid, .verify, .command-grid, .trust-grid { grid-template-columns: 1fr; }
+      .promptbox { padding: 58px 14px 15px; font-size: 12px; }
+      .copybtn { left: 12px; right: auto; }
+      .final-cta { padding: 28px 21px; }
+      .final-cta .hero-actions > * { width: 100%; }
+      .footrow { align-items: flex-start; flex-direction: column; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition: none !important; animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">跳到主要內容</a>
+  <nav aria-label="主要導覽">
+    <div class="wrap navrow">
+      <a class="brand" href="#top"><span class="mark" aria-hidden="true">↔</span><span>Progress Bridge</span></a>
+      <div class="navlinks">
+        <a href="#install" data-t="nav_install">開始使用</a>
+        <a href="#compat" data-t="nav_compat">既有系統</a>
+        <a class="github-link" href="https://github.com/Nouischen/cross-ai-progress-bridge" target="_blank" rel="noopener">GitHub ↗</a>
+        <span class="langswitch" aria-label="Language">
+          <button type="button" class="active" data-lang-button="zh-Hant">繁中</button>
+          <button type="button" data-lang-button="en">EN</button>
+        </span>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main">
+    <div class="lang-panel" data-lang-panel="zh-Hant">
+      <header class="hero" id="top">
+        <div class="wrap hero-grid">
+          <div>
+            <span class="eyebrow">Claude Code × Codex × 新對話</span>
+            <h1>換視窗、換模型，<br><span class="underline">進度不用重講。</span></h1>
+            <p class="lead">把工作進度留在你自己的 Markdown 檔。開新的 Claude Code、Codex，甚至同一個模型的新對話，都能接著做。</p>
+            <div class="hero-actions">
+              <a class="pill" href="#install">三步驟開始 <span aria-hidden="true">↓</span></a>
+              <a class="ghost" href="https://github.com/Nouischen/cross-ai-progress-bridge" target="_blank" rel="noopener">查看開源專案 ↗</a>
+            </div>
+            <div class="micro">免手動下載 · 不需要 Obsidian · 無帳號、無遙測 · 本機 Markdown</div>
+          </div>
+          <div class="demo" aria-label="跨 AI 接力示意圖">
+            <div class="browserbar"><i class="dot" style="background:#f36b5b"></i><i class="dot" style="background:#f6c453"></i><i class="dot" style="background:#63c88a"></i><span>progress/summer-reading.md</span></div>
+            <div class="handoff">
+              <div class="agent"><div class="avatar" style="background:#ffe7df">C</div><div><strong>Claude Code</strong><small>「記錄進度」</small></div></div>
+              <div class="file-card">
+                <div class="file-title"><span>暑假閱讀清單</span><span class="ready">ACTIVE</span></div>
+                <div class="taskline"><span class="check done">✓</span><span>已決定第一本書</span></div>
+                <div class="taskline"><span class="check"></span><span>列出前三章的閱讀重點</span></div>
+                <div class="taskline"><span class="check"></span><span>下一步：整理第一章</span></div>
+              </div>
+              <div class="arrowline">同一份檔案</div>
+              <div class="agent" style="margin-top:17px"><div class="avatar" style="background:#e6efff">G</div><div><strong>Codex</strong><small>「我有哪些進度還沒做完的？」</small></div></div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="tint" id="why">
+        <div class="wrap">
+          <span class="section-tag">Why it matters</span>
+          <h2>對話越長，不代表 AI 越懂你</h2>
+          <p class="sub">真正需要帶走的通常不是全部聊天，而是「做到哪裡、為什麼這樣決定、接下來做什麼」。把這些整理成可讀的進度檔，新視窗就不必重讀整段歷史。</p>
+          <div class="cards">
+            <article class="card"><div class="icon">🪟</div><h3>同模型，換新對話</h3><p>Claude 換 Claude、Codex 換 Codex。離開過長的 context，保留真正有用的工作狀態。</p></article>
+            <article class="card"><div class="icon">⇄</div><h3>跨模型，按長處交班</h3><p>一邊研究與整理，另一邊實作或審查；也能輪流使用兩邊訂閱額度。哪個模型適合哪一步，由你決定。</p></article>
+            <article class="card"><div class="icon">☑</div><h3>直接問未完成事項</h3><p>說「我有哪些進度還沒做完的？」就列出進行中、卡住與下一步，不必記檔名或 task ID。</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section id="install">
+        <div class="wrap">
+          <span class="section-tag">No-download setup</span>
+          <h2>三步驟安裝，全程跟 AI 說</h2>
+          <p class="sub">你不用到 GitHub 下載 ZIP，也不用解壓或搬檔。只要先開一個安全資料夾，再把固定版本的安裝指令貼給 Claude Code 或 Codex。</p>
+          <div class="setup-note"><span aria-hidden="true">⚠️</span><div><strong>第一次請用新資料夾測試。</strong>不要直接用含病歷、未去識別化個資、密碼、金鑰，或其他敏感內容的資料夾。</div></div>
+          <div class="steps">
+            <article class="step">
+              <div class="num">1</div>
+              <div>
+                <h3>建立一個空白測試資料夾</h3>
+                <p>不要直接在桌面根目錄或家目錄貼上。照你的電腦做：</p>
+                <div class="os-grid">
+                  <div class="os"><b>Windows</b><ol><li>打開「檔案總管」</li><li>左邊點「文件」</li><li>右鍵新增資料夾</li><li>命名「AI進度接力測試」</li></ol></div>
+                  <div class="os"><b>macOS</b><ol><li>打開 Finder</li><li>左邊點 Documents</li><li>新增檔案夾</li><li>命名「AI進度接力測試」</li></ol></div>
+                </div>
+                <p>接著在 Claude Code 選 <b>Local / Select folder</b>，或在 Codex 新增 <b>local project</b>，選剛才的資料夾。</p>
+              </div>
+            </article>
+            <article class="step">
+              <div class="num">2</div>
+              <div>
+                <h3>把這一句貼給其中一個 AI</h3>
+                <p>Claude Code 或 Codex 選一邊貼一次即可。AI 會抓固定版本、核對雜湊，再直接安裝；完整提示詞不用貼到第二邊。</p>
+                <div class="promptbox" id="install-prompt-zh">請把 https://raw.githubusercontent.com/Nouischen/cross-ai-progress-bridge/v1.0.0/INSTALL.md 下載到系統暫存資料夾，確認 SHA-256 為 62B052F6791BDA02C6749B3FD8FEDF320C3A4EE969EC8D32C432E438032C4FA2，完整讀取後，在目前專案逐條執行。不要只說明步驟，請直接安裝；無法完整讀取或雜湊不符就停止，不要猜測或改用其他來源。<button class="copybtn" type="button" data-copy-target="install-prompt-zh">複製</button></div>
+                <div class="copy-status" role="status" aria-live="polite"></div>
+                <p>看到權限確認時，請先看清楚它只在目前測試資料夾與系統暫存區操作，再允許。若找不到 Git 或目前位置不適合，安裝器會用白話告訴你下一步，不會硬裝。</p>
+              </div>
+            </article>
+            <article class="step">
+              <div class="num">3</div>
+              <div>
+                <h3>用兩個全新對話驗證</h3>
+                <p>安裝完成先顯示 <b>NOT READY</b> 是正常的。它不會在同一個安裝視窗假裝驗證成功。</p>
+                <div class="verify">
+                  <div class="vitem">全新 Claude Code 對話，第一句輸入<code>驗證接力</code></div>
+                  <div class="vitem">全新 Codex 對話，第一句輸入<code>驗證接力</code></div>
+                  <div class="vitem">兩邊都完成，任一邊輸入<code>完成驗證</code></div>
+                </div>
+                <p>看到 <b>READY</b>，才代表兩邊真的指向同一個實體專案資料夾。</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="tint" id="commands">
+        <div class="wrap">
+          <span class="section-tag">Everyday language</span>
+          <h2>日常只要說人話</h2>
+          <p class="sub">進度格式、檔名、備份與衝突處理交給系統；你只需要說現在想做什麼。</p>
+          <div class="command-grid">
+            <div class="command"><code>記錄進度</code><span>把目前工作整理成可接續的任務檔。</span></div>
+            <div class="command"><code>繼續上次進度</code><span>只有一筆就直接接續，多筆就列出讓你選。</span></div>
+            <div class="command"><code>我有哪些進度還沒做完的？</code><span>列出進行中與卡住的任務、更新日和下一步。</span></div>
+            <div class="command"><code>繼續某任務</code><span>用標題或 task ID 指定想接手的工作。</span></div>
+            <div class="command"><code>列出進行中</code><span>快速查看所有尚未完成的事項。</span></div>
+            <div class="command"><code>重設驗證</code><span>環境改變後重新跑 Claude Code／Codex 雙邊驗證。</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="compat">
+        <div class="wrap">
+          <span class="section-tag">Compatibility</span>
+          <h2>像插座一樣加上去，但不亂碰原系統</h2>
+          <p class="sub">相容不是一句「保證不衝突」。真正安全的做法，是先辨識、取得同意，再沿用原本的路徑與狀態語意。</p>
+          <div class="compat">
+            <div class="socket"><h3>已經有自己的簡單系統？</h3><p>安裝器先只看檔名。發現 `CLAUDE.md`、`AGENTS.md`、progress、tasks、notes/current 或類似來源時，會列出準備讀取的檔案並問你是否允許整合。</p></div>
+            <div class="checks">
+              <div><span>1️⃣</span><p><b>不先偷讀內容</b><span>探索階段只看名稱；私密筆記、憑證與病歷不在讀取範圍。</span></p></div>
+              <div><span>2️⃣</span><p><b>不搬家、不蓋掉</b><span>沿用既有路徑、格式與封存方式，修改前先備份。</span></p></div>
+              <div><span>3️⃣</span><p><b>對不起來就停</b><span>既有 status 無法可靠對應 active／blocked／done 時，交回給你決定，不自行發明。</span></p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tint" id="safety">
+        <div class="wrap">
+          <span class="section-tag">Local & auditable</span>
+          <h2>資料留在你的資料夾，規則公開可查</h2>
+          <p class="sub">這個專案沒有後端、帳號、資料庫或遙測。GitHub 提供的是安裝規格；你的任務內容不會回傳給作者。</p>
+          <div class="trust-grid">
+            <article class="trust-card"><h3>你會得到什麼</h3><ul><li>純文字 Markdown，任何編輯器都能打開</li><li>固定版本 URL＋SHA-256 完整性檢查</li><li>修改既有檔案前備份</li><li>偵測同時變更時保留 conflict，不覆蓋原檔</li><li>Claude Code 與 Codex 的 fresh-session 證據</li></ul></article>
+            <article class="trust-card warning"><h3>不要放什麼</h3><ul><li>未去識別化病歷或病人資料</li><li>身分證號、電話等敏感個資</li><li>密碼、API key、憑證與私鑰</li><li>你不希望任何 AI 讀取的私密筆記</li><li>需要兩個 AI 同時編輯的任務</li></ul></article>
+          </div>
+        </div>
+      </section>
+
+      <section id="faq">
+        <div class="wrap">
+          <span class="section-tag">FAQ</span>
+          <h2>先把幾個容易誤會的地方說清楚</h2>
+          <details><summary>一般 ChatGPT 或 claude.ai 網頁聊天框可以用嗎？</summary><p>不行。這套系統需要 Claude Code 與 Codex 能讀寫同一個本機專案資料夾。一般網頁聊天沒有共同的本機檔案空間。</p></details>
+          <details><summary>為什麼第一次不建議在 Git 專案測？</summary><p>Claude Code Desktop 對 Git 專案可能建立隔離 worktree；如果 Claude Code 和 Codex 指向不同 checkout，就算看起來是同一個專案，也不會讀到同一份未提交進度。熟悉 Git 的人可以使用，但要自行確認兩邊是同一個實體 checkout。</p></details>
+          <details><summary>它會自動判斷哪個模型比較擅長嗎？</summary><p>不會。它保存可交班的工作狀態，不替你評比模型。你可以依任務、實際表現、額度與偏好決定何時切換，再把同一份進度交給另一邊。</p></details>
+          <details><summary>是不是完全不會衝突？</summary><p>它會用備份、revision、候選檔與 conflicts 目錄降低覆寫風險，但只支援依序交班。兩個 AI 同時修改同一任務仍可能衝突，因此明確禁止這樣使用。</p></details>
+          <details><summary>為什麼安裝後還要跑兩次「驗證接力」？</summary><p>「檔案已建立」不等於「兩個新 session 都真的會載入」。fresh 驗證要求 Claude Code 與 Codex 各自在全新對話的第一句讀取同一個隨機測試任務，兩邊證據一致後才切成 READY。</p></details>
+        </div>
+      </section>
+
+      <section style="padding-top:30px">
+        <div class="wrap final-cta">
+          <h2>下次換視窗，不必再從頭解釋。</h2>
+          <p>先用一個空白、無敏感資料的資料夾跑完三步驟。確認 READY 後，再把真正的工作一件一件交給它記錄。</p>
+          <div class="hero-actions"><a class="pill" href="#install">開始安裝 ↑</a><a class="ghost" href="https://github.com/Nouischen/cross-ai-progress-bridge" target="_blank" rel="noopener">GitHub 原始碼 ↗</a></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="lang-panel" data-lang-panel="en" hidden>
+      <header class="hero" id="top-en">
+        <div class="wrap hero-grid">
+          <div>
+            <span class="eyebrow">Claude Code × Codex × fresh sessions</span>
+            <h1>Switch chats or models.<br><span class="underline">Keep the progress.</span></h1>
+            <p class="lead">A local Markdown handoff system shared by Claude Code, Codex, and fresh sessions of the same tool.</p>
+            <div class="hero-actions"><a class="pill" href="#install-en">Start in three steps ↓</a><a class="ghost" href="https://github.com/Nouischen/cross-ai-progress-bridge" target="_blank" rel="noopener">View on GitHub ↗</a></div>
+            <div class="micro">No manual download · No Obsidian · No account or telemetry · Local Markdown</div>
+          </div>
+          <div class="demo" aria-label="Cross-AI handoff illustration">
+            <div class="browserbar"><i class="dot" style="background:#f36b5b"></i><i class="dot" style="background:#f6c453"></i><i class="dot" style="background:#63c88a"></i><span>progress/current-task.md</span></div>
+            <div class="handoff"><div class="agent"><div class="avatar" style="background:#ffe7df">C</div><div><strong>Claude Code</strong><small>records progress</small></div></div><div class="file-card"><div class="file-title"><span>Current task</span><span class="ready">ACTIVE</span></div><div class="taskline"><span class="check done">✓</span><span>Decision recorded</span></div><div class="taskline"><span class="check"></span><span>Next step preserved</span></div><div class="taskline"><span class="check"></span><span>Blocker made explicit</span></div></div><div class="arrowline">one local file</div><div class="agent" style="margin-top:17px"><div class="avatar" style="background:#e6efff">G</div><div><strong>Codex</strong><small>continues the work</small></div></div></div>
+          </div>
+        </div>
+      </header>
+
+      <section class="tint"><div class="wrap"><span class="section-tag">Why it matters</span><h2>Keep the useful state, not the entire chat</h2><p class="sub">The bridge records goals, completed work, next steps, blockers, decisions, evidence, relevant files, and rerun instructions. It supports both a new chat with the same model and a handoff across models.</p><div class="cards"><article class="card"><div class="icon">🪟</div><h3>Same model, fresh chat</h3><p>Move from one Claude Code or Codex session to another without replaying the whole conversation.</p></article><article class="card"><div class="icon">⇄</div><h3>Claude ↔ Codex</h3><p>Choose the model for each stage yourself; the bridge carries the work state between them.</p></article><article class="card"><div class="icon">☑</div><h3>Ask what is unfinished</h3><p>List active and blocked tasks, their latest update, and the next action in plain language.</p></article></div></div></section>
+
+      <section id="install-en"><div class="wrap"><span class="section-tag">No-download setup</span><h2>Install by talking to your AI</h2><p class="sub">The v1.0.0 installer interface has been end-to-end tested in Traditional Chinese. You do not manually download, unzip, or move files.</p><div class="setup-note"><span>⚠️</span><div><strong>Start with a new, empty, non-Git test folder.</strong>Never test with patient records, unredacted personal data, passwords, API keys, or credentials.</div></div><div class="steps">
+        <article class="step"><div class="num">1</div><div><h3>Create and open a safe test folder</h3><p>In Documents, create a folder named <b>AI Progress Bridge Test</b>. Open that exact folder as a Local project in Claude Code or Codex. Do not use your Desktop root or home directory.</p></div></article>
+        <article class="step"><div class="num">2</div><div><h3>Paste this into either Claude Code or Codex</h3><div class="promptbox" id="install-prompt-en">Download https://raw.githubusercontent.com/Nouischen/cross-ai-progress-bridge/v1.0.0/INSTALL.md to the system temporary directory, verify that its SHA-256 is 62B052F6791BDA02C6749B3FD8FEDF320C3A4EE969EC8D32C432E438032C4FA2, read it in full, and follow it step by step to install in the currently open project. Do not merely explain the steps; perform the installation. If the download is incomplete or the hash differs, stop without guessing or using another source.<button class="copybtn" type="button" data-copy-target="install-prompt-en">Copy</button></div><div class="copy-status" role="status" aria-live="polite"></div></div></article>
+        <article class="step"><div class="num">3</div><div><h3>Verify from two fresh sessions</h3><div class="verify"><div class="vitem">Fresh Claude Code session; first message:<code>驗證接力</code></div><div class="vitem">Fresh Codex session; first message:<code>驗證接力</code></div><div class="vitem">After both pass, run:<code>完成驗證</code></div></div><p>The tested command surface is currently Traditional Chinese. READY means both tools proved they can read the same physical project folder.</p></div></article>
+      </div></div></section>
+
+      <section class="tint"><div class="wrap"><span class="section-tag">Capabilities</span><h2>What is included</h2><div class="command-grid"><div class="command"><code>記錄進度</code><span>Record or update the current task.</span></div><div class="command"><code>繼續上次進度</code><span>Resume the latest unfinished task.</span></div><div class="command"><code>我有哪些進度還沒做完的？</code><span>List unfinished and blocked work.</span></div><div class="command"><code>驗證接力</code><span>Prove a fresh session reads the shared state.</span></div><div class="command"><code>完成驗證</code><span>Switch to READY after both surfaces pass.</span></div><div class="command"><code>重設驗證</code><span>Start a new dual-surface verification run.</span></div></div></div></section>
+
+      <section><div class="wrap"><span class="section-tag">Compatibility & privacy</span><h2>Additive by design</h2><p class="sub">If the installer finds an existing progress system, `CLAUDE.md`, or `AGENTS.md`, it inventories names first and asks for consent before reading or integrating. It preserves existing content, stops when status semantics cannot be mapped safely, and never uploads project data.</p><div class="trust-grid"><article class="trust-card"><h3>Local and auditable</h3><ul><li>Plain Markdown files</li><li>Version-pinned URL and SHA-256</li><li>No backend, account, database, or telemetry</li><li>Backups and conflict preservation</li><li>Open installation specification</li></ul></article><article class="trust-card warning"><h3>Important limits</h3><ul><li>Use one AI at a time</li><li>Both tools must open the same physical folder</li><li>Web-only chats are unsupported</li><li>Do not store secrets or unredacted personal data</li><li>Git worktrees require advanced manual checking</li></ul></article></div></div></section>
+
+      <section style="padding-top:30px"><div class="wrap final-cta"><h2>Open a fresh chat without starting over.</h2><p>Try the three-step setup in a clean folder, reach READY, then start recording real work one task at a time.</p><div class="hero-actions"><a class="pill" href="#install-en">Start setup ↑</a><a class="ghost" href="https://github.com/Nouischen/cross-ai-progress-bridge" target="_blank" rel="noopener">View source ↗</a></div></div></section>
+    </div>
+  </main>
+
+  <footer><div class="wrap footrow"><span>Cross-AI Progress Bridge · MIT · Dr. Yu-Chieh Chen（陳昱傑醫師）</span><span><a href="https://github.com/Nouischen/cross-ai-progress-bridge">GitHub</a> · <a href="https://github.com/Nouischen/cross-ai-progress-bridge/blob/main/SECURITY.md">Security</a></span></div></footer>
+
+  <script>
+    const translations = {
+      'zh-Hant': { nav_install: '開始使用', nav_compat: '既有系統', copied: '已複製，可以貼到 AI 了。', failed: '無法自動複製，請長按文字後選「複製」。' },
+      en: { nav_install: 'Get started', nav_compat: 'Compatibility', copied: 'Copied. Paste it into your AI.', failed: 'Copy failed. Select the text and copy it manually.' }
+    };
+
+    let currentLang = 'zh-Hant';
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-lang-panel]').forEach(panel => {
+        panel.hidden = panel.dataset.langPanel !== lang;
+      });
+      document.querySelectorAll('[data-lang-button]').forEach(button => {
+        const active = button.dataset.langButton === lang;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', String(active));
+      });
+      document.querySelectorAll('[data-t]').forEach(node => {
+        const key = node.dataset.t;
+        if (translations[lang][key]) node.textContent = translations[lang][key];
+      });
+      try { localStorage.setItem('progress-bridge-lang', lang); } catch (_) {}
+    }
+
+    async function copyText(button) {
+      const target = document.getElementById(button.dataset.copyTarget);
+      const clone = target.cloneNode(true);
+      clone.querySelectorAll('button').forEach(node => node.remove());
+      const value = clone.textContent.trim();
+      const status = target.nextElementSibling;
+      let success = false;
+      try {
+        await navigator.clipboard.writeText(value);
+        success = true;
+      } catch (_) {
+        const textarea = document.createElement('textarea');
+        textarea.value = value;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try { success = document.execCommand('copy'); } catch (_) { success = false; }
+        textarea.remove();
+      }
+      status.textContent = translations[currentLang][success ? 'copied' : 'failed'];
+      if (success) {
+        const previous = button.textContent;
+        button.textContent = currentLang === 'zh-Hant' ? '已複製 ✓' : 'Copied ✓';
+        window.setTimeout(() => { button.textContent = previous; }, 1800);
+      }
+    }
+
+    document.querySelectorAll('[data-lang-button]').forEach(button => {
+      button.addEventListener('click', () => setLanguage(button.dataset.langButton));
+    });
+    document.querySelectorAll('[data-copy-target]').forEach(button => {
+      button.addEventListener('click', () => copyText(button));
+    });
+
+    let preferred = 'zh-Hant';
+    try {
+      const saved = localStorage.getItem('progress-bridge-lang');
+      if (saved === 'en' || saved === 'zh-Hant') preferred = saved;
+      else if (!navigator.language.toLowerCase().startsWith('zh')) preferred = 'en';
+    } catch (_) {}
+    setLanguage(preferred);
+  </script>
+</body>
+</html>
